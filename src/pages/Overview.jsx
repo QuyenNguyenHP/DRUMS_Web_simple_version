@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import Footer from "../components/Footer";
 import Header from "../components/Header";
@@ -25,9 +25,9 @@ const cardClass =
   "rounded-[14px] border border-[#334155] bg-[#111827] p-4";
 const fieldClass =
   "w-full rounded-[12px] border border-[#334155] bg-[#0b1220] px-3 py-3 text-[14px] text-[#f8fafc] outline-none transition focus:border-[#2563eb]";
-const labelClass = "mb-2 block text-[13px] font-semibold text-[#8fb4ef]";
 const buttonClass =
-  "rounded-[12px] bg-blue-600 px-4 py-2 text-[14px] font-semibold text-white transition hover:bg-blue-500";
+  "rounded-[12px] bg-blue-600 px-4 py-2 text-[14px] font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70";
+const labelClass = "mb-2 block text-[13px] font-semibold text-[#8fb4ef]";
 
 const pad = (value) => String(value).padStart(2, "0");
 
@@ -53,6 +53,24 @@ const buildInitialUtcRange = () => {
     draftStartInput: toUtcInputValue(endMs - 24 * 3600000),
     draftEndInput: toUtcInputValue(endMs),
   };
+};
+
+const buildRangeFromVessel = (vesselOption) => {
+  const rangeEndMs = Number(vesselOption?.latestRangeEndMs ?? 0);
+  const rangeStartMs = Number(vesselOption?.latestRangeStartMs ?? 0);
+
+  if (Number.isFinite(rangeEndMs) && rangeEndMs > 0) {
+    return {
+      draftStartInput: toUtcInputValue(
+        Number.isFinite(rangeStartMs) && rangeStartMs > 0
+          ? rangeStartMs
+          : rangeEndMs - 24 * 3600000
+      ),
+      draftEndInput: toUtcInputValue(rangeEndMs),
+    };
+  }
+
+  return buildInitialUtcRange();
 };
 
 const DateField = ({ label, value, onChange }) => (
@@ -86,57 +104,98 @@ const MultiSelectField = ({
   options,
   selectedValues,
   onToggle,
+  isOpen,
+  onOpenChange,
+  getOptionValue,
+  getOptionLabel,
+  getOptionMeta,
+  emptyMessage,
+  placeholder,
   disabled = false,
 }) => {
+  const containerRef = useRef(null);
   const selectedLabels = options
-    .filter((option) => selectedValues.includes(option.channelDescription))
-    .map((option) => option.channelDescription);
+    .filter((option) => selectedValues.includes(getOptionValue(option)))
+    .map((option) => getOptionLabel(option));
+
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event) => {
+      if (!containerRef.current?.contains(event.target)) {
+        onOpenChange(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [isOpen, onOpenChange]);
 
   return (
-    <div className="block">
+    <div ref={containerRef} className="block">
       <span className={labelClass}>{label}</span>
-      <details className="group relative" open={false}>
-        <summary
-          className={`${fieldClass} flex cursor-pointer list-none items-center justify-between gap-3 ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
+      <div className="relative">
+        <button
+          type="button"
+          className={`${fieldClass} flex cursor-pointer items-center justify-between gap-3 ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
+          onClick={() => {
+            if (!disabled) {
+              onOpenChange(!isOpen);
+            }
+          }}
+          aria-expanded={isOpen}
+          disabled={disabled}
         >
           <span className="truncate text-left">
             {selectedLabels.length > 0
               ? `${selectedLabels.length} item(s) selected`
-              : "Select chart data"}
+              : placeholder}
           </span>
-          <span className="text-slate-400 transition group-open:rotate-180">▼</span>
-        </summary>
+          <span className={`text-slate-400 transition ${isOpen ? "rotate-180" : ""}`}>
+            v
+          </span>
+        </button>
 
-        {!disabled ? (
+        {!disabled && isOpen ? (
           <div className="absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-[12px] border border-[#334155] bg-[#0b1220] p-2 shadow-[0_16px_40px_rgba(2,6,23,0.45)]">
             {options.length === 0 ? (
-              <div className="px-3 py-2 text-[13px] text-slate-400">No chart data available.</div>
+              <div className="px-3 py-2 text-[13px] text-slate-400">{emptyMessage}</div>
             ) : (
-              options.map((option) => (
-                <label
-                  key={option.channelDescription}
-                  className="flex cursor-pointer items-start gap-3 rounded-[10px] px-3 py-2 text-[#f8fafc] transition hover:bg-slate-800"
-                >
-                  <input
-                    type="checkbox"
-                    className="mt-1 h-4 w-4 rounded border-slate-500 bg-transparent accent-blue-500"
-                    checked={selectedValues.includes(option.channelDescription)}
-                    onChange={() => onToggle(option.channelDescription)}
-                  />
-                  <span className="min-w-0">
-                    <span className="block text-[13px] leading-5">
-                      {option.channelDescription}
+              options.map((option) => {
+                const optionValue = getOptionValue(option);
+                const optionMeta = getOptionMeta(option);
+
+                return (
+                  <label
+                    key={optionValue}
+                    className="flex cursor-pointer items-start gap-3 rounded-[10px] px-3 py-2 text-[#f8fafc] transition hover:bg-slate-800"
+                  >
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-4 w-4 rounded border-slate-500 bg-transparent accent-blue-500"
+                      checked={selectedValues.includes(optionValue)}
+                      onChange={() => onToggle(optionValue)}
+                    />
+                    <span className="min-w-0">
+                      <span className="block text-[13px] leading-5">
+                        {getOptionLabel(option)}
+                      </span>
+                      {optionMeta ? (
+                        <span className="block text-[11px] text-slate-400">{optionMeta}</span>
+                      ) : null}
                     </span>
-                    {option.unit ? (
-                      <span className="block text-[11px] text-slate-400">{option.unit}</span>
-                    ) : null}
-                  </span>
-                </label>
-              ))
+                  </label>
+                );
+              })
             )}
           </div>
         ) : null}
-      </details>
+      </div>
     </div>
   );
 };
@@ -145,7 +204,7 @@ const Overview = () => {
   const initialRange = useMemo(buildInitialUtcRange, []);
   const [overviewConfig, setOverviewConfig] = useState([]);
   const [selectedVessel, setSelectedVessel] = useState("");
-  const [selectedEngine, setSelectedEngine] = useState("");
+  const [selectedEngines, setSelectedEngines] = useState([]);
   const [channelOptions, setChannelOptions] = useState([]);
   const [selectedChannels, setSelectedChannels] = useState([]);
   const [submittedFilters, setSubmittedFilters] = useState(null);
@@ -157,12 +216,20 @@ const Overview = () => {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [draftStartInput, setDraftStartInput] = useState(initialRange.draftStartInput);
   const [draftEndInput, setDraftEndInput] = useState(initialRange.draftEndInput);
+  const [isEngineOpen, setIsEngineOpen] = useState(false);
+  const [isChartDataOpen, setIsChartDataOpen] = useState(false);
 
   const selectedVesselOption =
     overviewConfig.find((option) => option.value === selectedVessel) ?? overviewConfig[0] ?? null;
   const engineOptions = selectedVesselOption?.engines ?? [];
-  const selectedEngineOption =
-    engineOptions.find((option) => option.key === selectedEngine) ?? engineOptions[0] ?? null;
+  const selectedEngineOptions = useMemo(
+    () => engineOptions.filter((option) => selectedEngines.includes(option.key)),
+    [engineOptions, selectedEngines]
+  );
+  const selectedSerialNumbers = useMemo(
+    () => selectedEngineOptions.map((option) => option.serialNo).filter(Boolean),
+    [selectedEngineOptions]
+  );
   const activeChartChannels = submittedFilters?.channelDescriptions ?? [];
 
   useEffect(() => {
@@ -177,9 +244,13 @@ const Overview = () => {
         }
 
         const nextVessels = Array.isArray(payload?.vessels) ? payload.vessels : [];
+        const firstVessel = nextVessels[0] ?? null;
         setOverviewConfig(nextVessels);
-        setSelectedVessel(nextVessels[0]?.value ?? "");
-        setSelectedEngine(nextVessels[0]?.engines?.[0]?.key ?? "");
+        setSelectedVessel(firstVessel?.value ?? "");
+        setSelectedEngines(firstVessel?.engines?.[0]?.key ? [firstVessel.engines[0].key] : []);
+        const nextRange = buildRangeFromVessel(firstVessel);
+        setDraftStartInput(nextRange.draftStartInput);
+        setDraftEndInput(nextRange.draftEndInput);
       })
       .catch((loadError) => {
         if (!isActive) {
@@ -203,37 +274,58 @@ const Overview = () => {
   }, []);
 
   useEffect(() => {
-    if (engineOptions.length && !engineOptions.some((option) => option.key === selectedEngine)) {
-      setSelectedEngine(engineOptions[0].key);
+    if (engineOptions.length === 0) {
+      setSelectedEngines([]);
+      return;
     }
-  }, [engineOptions, selectedEngine]);
+
+    const validEngineKeys = new Set(engineOptions.map((option) => option.key));
+    const nextSelectedEngines = selectedEngines.filter((engineKey) =>
+      validEngineKeys.has(engineKey)
+    );
+
+    if (nextSelectedEngines.length === 0) {
+      setSelectedEngines([engineOptions[0].key]);
+      return;
+    }
+
+    if (nextSelectedEngines.length !== selectedEngines.length) {
+      setSelectedEngines(nextSelectedEngines);
+    }
+  }, [engineOptions, selectedEngines]);
 
   useEffect(() => {
-    if (!selectedVessel || !selectedEngineOption?.serialNo) {
+    if (!selectedVessel || selectedSerialNumbers.length === 0) {
       setChannelOptions([]);
       setSelectedChannels([]);
-      setSubmittedFilters(null);
-      setTrendPayload(null);
+      setIsEngineOpen(false);
+      setIsChartDataOpen(false);
       return;
     }
 
     let isActive = true;
     setIsChannelOptionsLoading(true);
     setError("");
+    setIsChartDataOpen(false);
 
     fetchOverviewChannelOptions({
       vessel: selectedVessel,
-      serialNo: selectedEngineOption.serialNo,
+      serialNumbers: selectedSerialNumbers,
     })
       .then((payload) => {
         if (!isActive) {
           return;
         }
 
-        setChannelOptions(Array.isArray(payload?.channels) ? payload.channels : []);
-        setSelectedChannels([]);
-        setSubmittedFilters(null);
-        setTrendPayload(null);
+        const nextChannels = Array.isArray(payload?.channels) ? payload.channels : [];
+        const nextChannelDescriptions = new Set(
+          nextChannels.map((channel) => channel.channelDescription)
+        );
+
+        setChannelOptions(nextChannels);
+        setSelectedChannels((currentValues) =>
+          currentValues.filter((value) => nextChannelDescriptions.has(value))
+        );
       })
       .catch((loadError) => {
         if (!isActive) {
@@ -241,9 +333,6 @@ const Overview = () => {
         }
 
         setChannelOptions([]);
-        setSelectedChannels([]);
-        setSubmittedFilters(null);
-        setTrendPayload(null);
         setError(
           loadError instanceof Error
             ? loadError.message
@@ -259,10 +348,10 @@ const Overview = () => {
     return () => {
       isActive = false;
     };
-  }, [selectedEngineOption, selectedVessel]);
+  }, [selectedSerialNumbers, selectedVessel]);
 
   useEffect(() => {
-    if (!submittedFilters?.serialNo || activeChartChannels.length === 0) {
+    if (!submittedFilters?.serialNumbers?.length || activeChartChannels.length === 0) {
       setIsTrendLoading(false);
       return;
     }
@@ -273,7 +362,7 @@ const Overview = () => {
 
     fetchOverviewTrend({
       vessel: submittedFilters.vessel,
-      serialNo: submittedFilters.serialNo,
+      serialNumbers: submittedFilters.serialNumbers,
       channelDescriptions: submittedFilters.channelDescriptions,
       startTime: new Date(submittedFilters.startMs).toISOString(),
       endTime: new Date(submittedFilters.endMs).toISOString(),
@@ -318,32 +407,34 @@ const Overview = () => {
     [channelOptions]
   );
 
-  const chartSeries = useMemo(
-    () =>
-      activeChartChannels.map((channelDescription, index) => ({
-        name: channelDescription,
-        dataKey: `series_${index}`,
-        color: SERIES_COLORS[index % SERIES_COLORS.length],
+  const chartSeries = useMemo(() => {
+    const appliedEngines = submittedFilters?.engines ?? [];
+
+    return appliedEngines.flatMap((engineOption, engineIndex) =>
+      activeChartChannels.map((channelDescription, channelIndex) => ({
+        name: `${engineOption.label} - ${channelDescription}`,
+        dataKey: `${engineOption.serialNo}::${channelDescription}`,
+        color:
+          SERIES_COLORS[
+            (engineIndex * Math.max(activeChartChannels.length, 1) + channelIndex) %
+              SERIES_COLORS.length
+          ],
         precision: 2,
         unit: channelMetadata[channelDescription]?.unit ?? "",
-      })),
-    [activeChartChannels, channelMetadata]
-  );
+      }))
+    );
+  }, [activeChartChannels, channelMetadata, submittedFilters]);
 
   const chartData = useMemo(() => {
     const rowsByTimestamp = new Map();
-    const seriesLookup = Object.fromEntries(
-      activeChartChannels.map((channelDescription, index) => [
-        channelDescription,
-        `series_${index}`,
-      ])
-    );
 
     for (const record of Array.isArray(trendPayload?.records) ? trendPayload.records : []) {
       const timestampMs = Number(record.timestampMs ?? 0);
-      const dataKey = seriesLookup[record.channelDescription];
+      const serialNo = String(record.serialNo ?? "");
+      const channelDescription = String(record.channelDescription ?? "");
+      const dataKey = `${serialNo}::${channelDescription}`;
 
-      if (!Number.isFinite(timestampMs) || !dataKey) {
+      if (!Number.isFinite(timestampMs) || !serialNo || !channelDescription) {
         continue;
       }
 
@@ -352,17 +443,18 @@ const Overview = () => {
         timestampMs,
       };
 
-      row[dataKey] = Number(record.value ?? 0);
+      const numericValue = Number(record.value);
+      row[dataKey] = Number.isFinite(numericValue) ? numericValue : null;
       rowsByTimestamp.set(timestampMs, row);
     }
 
     return Array.from(rowsByTimestamp.values()).sort(
       (leftRow, rightRow) => leftRow.timestampMs - rightRow.timestampMs
     );
-  }, [activeChartChannels, trendPayload]);
+  }, [trendPayload]);
 
-  const resetDraftRange = () => {
-    const nextRange = buildInitialUtcRange();
+  const resetDraftRange = (vesselOption = selectedVesselOption) => {
+    const nextRange = buildRangeFromVessel(vesselOption);
     setDraftStartInput(nextRange.draftStartInput);
     setDraftEndInput(nextRange.draftEndInput);
   };
@@ -375,45 +467,59 @@ const Overview = () => {
     );
   };
 
-  const handleApplyFilters = () => {
-    const startMs = fromUtcInputValue(draftStartInput);
-    const endMs = fromUtcInputValue(draftEndInput);
+  const handleEngineToggle = (engineKey) => {
+    setSelectedEngines((currentValues) =>
+      currentValues.includes(engineKey)
+        ? currentValues.filter((value) => value !== engineKey)
+        : [...currentValues, engineKey]
+    );
+  };
+
+  const applyFiltersForRange = (startInput, endInput) => {
+    const startMs = fromUtcInputValue(startInput);
+    const endMs = fromUtcInputValue(endInput);
 
     if (!startMs || !endMs) {
       setError("Both From (UTC) and To (UTC) are required.");
-      return;
+      return false;
     }
 
     if (startMs >= endMs) {
       setError("From (UTC) must be earlier than To (UTC).");
-      return;
+      return false;
     }
 
     if (!selectedVessel) {
       setError("Please select a vessel.");
-      return;
+      return false;
     }
 
-    if (!selectedEngineOption?.serialNo) {
-      setError("Please select an engine.");
-      return;
+    if (selectedEngineOptions.length === 0) {
+      setError("Please select at least one engine.");
+      return false;
     }
 
     if (selectedChannels.length === 0) {
       setError("Please select at least one chart data item before applying.");
-      return;
+      return false;
     }
 
     setError("");
+    setIsEngineOpen(false);
+    setIsChartDataOpen(false);
     setSubmittedFilters({
       vessel: selectedVessel,
-      serialNo: selectedEngineOption.serialNo,
-      engineKey: selectedEngineOption.key,
-      engineLabel: selectedEngineOption.label,
+      serialNumbers: selectedSerialNumbers,
+      engines: selectedEngineOptions,
       channelDescriptions: selectedChannels,
       startMs,
       endMs,
     });
+    return true;
+  };
+
+  const handleApplyFilters = () => {
+    applyFiltersForRange(draftStartInput, draftEndInput);
   };
 
   const handleShiftRange = (direction) => {
@@ -430,8 +536,21 @@ const Overview = () => {
       return;
     }
 
-    setError("");
+    applyFiltersForRange(nextStartInput, nextEndInput);
   };
+
+  const selectedEngineSummary =
+    selectedEngineOptions.length > 0
+      ? selectedEngineOptions.map((option) => option.label).join(", ")
+      : "--";
+  const selectedSerialSummary =
+    selectedEngineOptions.length > 0
+      ? selectedEngineOptions.map((option) => option.serialNo).join(", ")
+      : "--";
+  const appliedEngineTitle =
+    submittedFilters?.engines?.length > 0
+      ? submittedFilters.engines.map((engine) => engine.label).join(" vs ")
+      : selectedEngineSummary;
 
   return (
     <div className="flex min-h-screen w-full flex-col overflow-hidden bg-[#07111f]">
@@ -473,9 +592,14 @@ const Overview = () => {
                     type="button"
                     className={buttonClass}
                     onClick={handleApplyFilters}
-                    disabled={isConfigLoading}
+                    disabled={isConfigLoading || isChannelOptionsLoading || isTrendLoading}
                   >
-                    Apply Filters
+                    <span className="inline-flex items-center gap-2">
+                      {isTrendLoading ? (
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      ) : null}
+                      <span>{isTrendLoading ? "Loading..." : "Apply Filters"}</span>
+                    </span>
                   </button>
                 </div>
 
@@ -484,11 +608,18 @@ const Overview = () => {
                     label="Vessel"
                     value={selectedVessel}
                     onChange={(event) => {
+                      const nextVessel =
+                        overviewConfig.find((option) => option.value === event.target.value) ??
+                        null;
                       setSelectedVessel(event.target.value);
-                      resetDraftRange();
+                      setSelectedEngines(nextVessel?.engines?.[0]?.key ? [nextVessel.engines[0].key] : []);
+                      resetDraftRange(nextVessel);
                     }}
                     disabled={isConfigLoading}
                   >
+                    {overviewConfig.length === 0 ? (
+                      <option value="">No vessel configured</option>
+                    ) : null}
                     {overviewConfig.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
@@ -496,31 +627,33 @@ const Overview = () => {
                     ))}
                   </SelectField>
 
-                  <SelectField
+                  <MultiSelectField
                     label="Engine"
-                    value={selectedEngine}
-                    onChange={(event) => {
-                      setSelectedEngine(event.target.value);
-                      resetDraftRange();
-                    }}
+                    options={engineOptions}
+                    selectedValues={selectedEngines}
+                    onToggle={handleEngineToggle}
+                    isOpen={isEngineOpen}
+                    onOpenChange={setIsEngineOpen}
+                    getOptionValue={(option) => option.key}
+                    getOptionLabel={(option) => option.label}
+                    getOptionMeta={(option) => option.serialNo}
+                    placeholder="Select engine"
+                    emptyMessage="No engine configured."
                     disabled={isConfigLoading || engineOptions.length === 0}
-                  >
-                    {engineOptions.length === 0 ? (
-                      <option value="">No engine configured</option>
-                    ) : (
-                      engineOptions.map((option) => (
-                        <option key={option.key} value={option.key}>
-                          {option.label} ({option.serialNo})
-                        </option>
-                      ))
-                    )}
-                  </SelectField>
+                  />
 
                   <MultiSelectField
                     label="Chart data"
                     options={channelOptions}
                     selectedValues={selectedChannels}
                     onToggle={handleChannelToggle}
+                    isOpen={isChartDataOpen}
+                    onOpenChange={setIsChartDataOpen}
+                    getOptionValue={(option) => option.channelDescription}
+                    getOptionLabel={(option) => option.channelDescription}
+                    getOptionMeta={(option) => option.unit}
+                    placeholder="Select chart data"
+                    emptyMessage="No chart data available."
                     disabled={isChannelOptionsLoading || channelOptions.length === 0}
                   />
                 </div>
@@ -533,16 +666,12 @@ const Overview = () => {
                     </strong>
                   </span>
                   <span>
-                    Engine:{" "}
-                    <strong className="text-slate-200">
-                      {selectedEngineOption?.label ?? "--"}
-                    </strong>
+                    Engines:{" "}
+                    <strong className="text-slate-200">{selectedEngineSummary}</strong>
                   </span>
                   <span>
                     SerialNo:{" "}
-                    <strong className="text-slate-200">
-                      {selectedEngineOption?.serialNo ?? "--"}
-                    </strong>
+                    <strong className="text-slate-200">{selectedSerialSummary}</strong>
                   </span>
                   {selectedVesselOption?.database ? (
                     <span>
@@ -588,21 +717,25 @@ const Overview = () => {
             ) : null}
 
             <div className="flex-1 rounded-[12px] border border-[#334155] bg-[#0f172a] p-4">
+              {isTrendLoading ? (
+                <div className="mb-4 inline-flex items-center gap-2 rounded-[10px] border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-[13px] font-semibold text-sky-200">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Loading trend data from backend...
+                </div>
+              ) : null}
               <TimeSeriesLineChart
                 chartData={chartData}
                 series={chartSeries}
                 rangeStartMs={trendPayload?.meta?.rangeStartMs ?? null}
                 rangeEndMs={trendPayload?.meta?.rangeEndMs ?? null}
-                chartHeight={620}
-                title={`${selectedVesselOption?.label ?? "Vessel"} - ${
-                  submittedFilters?.engineLabel ?? selectedEngineOption?.label ?? "Engine"
-                } Trend`}
+                chartHeight={400}
+                title={`${selectedVesselOption?.label ?? "Vessel"} - ${appliedEngineTitle} Trend`}
                 yAxisName="Selected values"
                 emptyMessage={
                   isTrendLoading
                     ? "Loading trend history..."
                     : submittedFilters
-                      ? "No analog records returned for the selected vessel, engine, channels, and time range."
+                      ? "No analog records returned for the selected vessel, engines, channels, and time range."
                       : "Select chart data and press Apply Filters to request trend data."
                 }
               />

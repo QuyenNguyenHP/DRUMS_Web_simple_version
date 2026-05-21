@@ -72,15 +72,17 @@ export const fetchTrendHistory = async ({
   );
 };
 
-export const fetchOverviewChannelOptions = async ({ vessel, serialNo }) => {
+export const fetchOverviewChannelOptions = async ({ vessel, serialNumbers }) => {
   const url = new URL("/api/overview/channel-options", window.location.origin);
 
   if (vessel) {
     url.searchParams.set("vessel", vessel);
   }
 
-  if (serialNo) {
-    url.searchParams.set("serialNo", serialNo);
+  if (Array.isArray(serialNumbers) && serialNumbers.length > 0) {
+    serialNumbers
+      .filter((serialNo) => typeof serialNo === "string" && serialNo.trim())
+      .forEach((serialNo) => url.searchParams.append("serialNo", serialNo));
   }
 
   const response = await fetch(url.pathname + url.search);
@@ -102,7 +104,7 @@ export const fetchOverviewConfig = async () => {
 
 export const fetchOverviewTrend = async ({
   vessel,
-  serialNo,
+  serialNumbers,
   startTime,
   endTime,
   channelDescriptions,
@@ -113,8 +115,10 @@ export const fetchOverviewTrend = async ({
     url.searchParams.set("vessel", vessel);
   }
 
-  if (serialNo) {
-    url.searchParams.set("serialNo", serialNo);
+  if (Array.isArray(serialNumbers) && serialNumbers.length > 0) {
+    serialNumbers
+      .filter((serialNo) => typeof serialNo === "string" && serialNo.trim())
+      .forEach((serialNo) => url.searchParams.append("serialNo", serialNo));
   }
 
   if (startTime) {

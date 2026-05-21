@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 import sqlite3
+import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -13,6 +15,7 @@ from flask import Blueprint, jsonify, request
 database_api = Blueprint("database_api", __name__)
 BASE_DIR = Path(__file__).resolve().parent
 IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9_]+$")
+LOGGER = logging.getLogger(__name__)
 
 
 def load_json_config(file_name: str) -> dict[str, Any]:
@@ -49,12 +52,14 @@ DEFAULT_WINDOW_MINUTES = int(HISTORY_CONFIG.get("default_window_minutes", 240))
 DEFAULT_SERIES = HISTORY_CONFIG.get("default_series", [])
 
 DEFAULT_OVERVIEW_WINDOW_HOURS = int(OVERVIEW_CONFIG.get("default_window_hours", 24))
+MAX_OVERVIEW_RANGE_DAYS = int(OVERVIEW_CONFIG.get("max_range_days", 7))
 MAX_OVERVIEW_POINTS_PER_SERIES = int(OVERVIEW_CONFIG.get("max_points_per_series", 350))
 MYSQL_TIMESTAMP_COLUMN = OVERVIEW_CONFIG.get("timestamp_column", "TimeStamp")
 MYSQL_SERIAL_COLUMN = OVERVIEW_CONFIG.get("serial_column", "SerialNo")
 MYSQL_CHANNEL_COLUMN = OVERVIEW_CONFIG.get("channel_column", "ChannelDescription")
 MYSQL_VALUE_COLUMN = OVERVIEW_CONFIG.get("value_column", "Value")
 MYSQL_UNIT_COLUMN = OVERVIEW_CONFIG.get("unit_column", "Unit")
+LATEST_TIMESTAMP_COLUMN = OVERVIEW_CONFIG.get("latest_timestamp_column", "last_ts")
 CHANNEL_FILTER_UNIT_EXCLUDE = str(
     OVERVIEW_CONFIG.get("channel_filter_unit_exclude", "On/Off")
 ).strip()
@@ -69,6 +74,31 @@ def quote_mysql_identifier(identifier: str) -> str:
     if not IDENTIFIER_PATTERN.fullmatch(identifier):
         raise ValueError(f"Invalid identifier: {identifier}")
     return f"`{identifier}`"
+
+
+def duration_ms(start_time: float) -> float:
+    return round((time.perf_counter() - start_time) * 1000, 2)
+
+
+def log_backend_timing(
+    endpoint: str,
+    *,
+    status_code: int,
+    total_start: float,
+    serialize_start: float | None = None,
+    **fields: Any,
+) -> None:
+    payload = {
+        "endpoint": endpoint,
+        "status_code": status_code,
+        "total_ms": duration_ms(total_start),
+    }
+
+    if serialize_start is not None:
+        payload["serialize_ms"] = duration_ms(serialize_start)
+
+    payload.update(fields)
+    LOGGER.info("backend_timing %s", json.dumps(payload, default=str, ensure_ascii=True))
 
 
 def validate_absolute_range(start_time: str | None, end_time: str | None) -> None:
@@ -233,15 +263,48 @@ def get_vessel_config(vessel_key: str) -> dict[str, Any]:
     return vessel_config
 
 
+def get_vessel_latest_range(vessel_config: dict[str, Any]) -> tuple[int | None, int | None]:
+    latest_data_table = vessel_config.get("latest_data_table") or vessel_config.get("data_table")
+
+    if not latest_data_table:
+        return None, None
+
+    quoted_latest_data_table = quote_mysql_identifier(latest_data_table)
+    quoted_latest_timestamp_column = quote_mysql_identifier(LATEST_TIMESTAMP_COLUMN)
+
+    with create_mysql_connection(vessel_config["database"]) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"""
+                SELECT MAX({quoted_latest_timestamp_column}) AS latestTimestamp
+                FROM {quoted_latest_data_table}
+                """
+            )
+            latest_row = cursor.fetchone() or {}
+
+    latest_timestamp = latest_row.get("latestTimestamp")
+
+    if latest_timestamp is None:
+        return None, None
+
+    range_end_ms = int(latest_timestamp.replace(tzinfo=timezone.utc).timestamp() * 1000)
+    range_start_ms = range_end_ms - DEFAULT_OVERVIEW_WINDOW_HOURS * 3600000
+    return range_start_ms, range_end_ms
+
+
 def build_overview_vessel_payload() -> dict[str, Any]:
     vessels = []
 
     for vessel_key, vessel_config in VESSEL_CONFIGS.items():
+        range_start_ms, range_end_ms = get_vessel_latest_range(vessel_config)
         vessels.append(
             {
                 "value": vessel_key,
                 "label": vessel_config.get("label", vessel_key),
                 "database": vessel_config.get("database", ""),
+                "latestDataTable": vessel_config.get("latest_data_table", ""),
+                "latestRangeStartMs": range_start_ms,
+                "latestRangeEndMs": range_end_ms,
                 "engines": vessel_config.get("engines", []),
             }
         )
@@ -270,21 +333,50 @@ def create_mysql_connection(database_name: str) -> pymysql.connections.Connectio
     )
 
 
-def validate_vessel_serial(vessel_config: dict[str, Any], serial_no: str) -> None:
-    configured_serials = {
-        str(engine.get("serialNo", "")).strip()
+def get_vessel_engines_by_serial(
+    vessel_config: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    return {
+        str(engine.get("serialNo", "")).strip(): engine
         for engine in vessel_config.get("engines", [])
-        if engine.get("serialNo")
+        if str(engine.get("serialNo", "")).strip()
     }
 
-    if configured_serials and serial_no not in configured_serials:
-        raise ValueError("serialNo is not configured for the selected vessel.")
+
+def validate_vessel_serials(
+    vessel_config: dict[str, Any],
+    serial_numbers: list[str],
+) -> list[str]:
+    resolved_serials = []
+    seen_serials: set[str] = set()
+
+    for serial_no in serial_numbers:
+        normalized_serial = str(serial_no or "").strip()
+
+        if normalized_serial and normalized_serial not in seen_serials:
+            resolved_serials.append(normalized_serial)
+            seen_serials.add(normalized_serial)
+
+    if not resolved_serials:
+        raise ValueError("At least one serialNo is required.")
+
+    configured_serials = set(get_vessel_engines_by_serial(vessel_config))
+
+    if configured_serials:
+        invalid_serials = [
+            serial_no for serial_no in resolved_serials if serial_no not in configured_serials
+        ]
+
+        if invalid_serials:
+            raise ValueError("One or more serialNo values are not configured for the selected vessel.")
+
+    return resolved_serials
 
 
 def resolve_overview_range(
     cursor: pymysql.cursors.Cursor,
     quoted_data_table: str,
-    serial_no: str,
+    serial_numbers: list[str],
     start_time: str | None,
     end_time: str | None,
 ) -> tuple[datetime, datetime]:
@@ -298,15 +390,21 @@ def resolve_overview_range(
         if start_datetime > end_datetime:
             start_datetime, end_datetime = end_datetime, start_datetime
 
+        if end_datetime - start_datetime > timedelta(days=MAX_OVERVIEW_RANGE_DAYS):
+            raise ValueError(
+                f"overview trend range must not exceed {MAX_OVERVIEW_RANGE_DAYS} days."
+            )
+
         return start_datetime, end_datetime
 
+    serial_placeholders = ", ".join(["%s"] * len(serial_numbers))
     max_row = cursor.execute(
         f"""
         SELECT MAX({quote_mysql_identifier(MYSQL_TIMESTAMP_COLUMN)}) AS latestTimestamp
         FROM {quoted_data_table}
-        WHERE {quote_mysql_identifier(MYSQL_SERIAL_COLUMN)} = %s
+        WHERE {quote_mysql_identifier(MYSQL_SERIAL_COLUMN)} IN ({serial_placeholders})
         """,
-        (serial_no,),
+        tuple(serial_numbers),
     )
 
     if max_row == 0:
@@ -321,187 +419,332 @@ def resolve_overview_range(
     return latest_timestamp - timedelta(hours=DEFAULT_OVERVIEW_WINDOW_HOURS), latest_timestamp
 
 
-def build_overview_channel_options(vessel: str, serial_no: str) -> dict[str, Any]:
+def build_overview_channel_options(vessel: str, serial_numbers: list[str]) -> dict[str, Any]:
+    build_started = time.perf_counter()
     vessel_config = get_vessel_config(vessel)
-    validate_vessel_serial(vessel_config, serial_no)
+    resolved_serials = validate_vessel_serials(vessel_config, serial_numbers)
     quoted_channel_table = quote_mysql_identifier(vessel_config["channel_table"])
     quoted_channel_column = quote_mysql_identifier(MYSQL_CHANNEL_COLUMN)
     quoted_serial_column = quote_mysql_identifier(MYSQL_SERIAL_COLUMN)
     quoted_unit_column = quote_mysql_identifier(MYSQL_UNIT_COLUMN)
+    serial_placeholders = ", ".join(["%s"] * len(resolved_serials))
+    connect_started = time.perf_counter()
 
     with create_mysql_connection(vessel_config["database"]) as connection:
+        connect_ms = duration_ms(connect_started)
         with connection.cursor() as cursor:
+            query_started = time.perf_counter()
             cursor.execute(
                 f"""
-                SELECT
+                SELECT DISTINCT
                     {quoted_channel_column} AS channelDescription,
                     COALESCE(NULLIF({quoted_unit_column}, ''), '') AS unit
                 FROM {quoted_channel_table}
-                WHERE {quoted_serial_column} = %s
-                  AND LOWER(TRIM(COALESCE({quoted_unit_column}, ''))) <> %s
-                GROUP BY
-                    {quoted_channel_column},
-                    COALESCE(NULLIF({quoted_unit_column}, ''), '')
+                WHERE {quoted_serial_column} IN ({serial_placeholders})
+                  AND (
+                        {quoted_unit_column} IS NULL
+                     OR {quoted_unit_column} = ''
+                     OR {quoted_unit_column} <> %s
+                  )
                 ORDER BY {quoted_channel_column}
                 """,
-                (serial_no, CHANNEL_FILTER_UNIT_EXCLUDE.lower()),
+                (*resolved_serials, CHANNEL_FILTER_UNIT_EXCLUDE),
             )
             channels = cursor.fetchall()
+            query_ms = duration_ms(query_started)
 
     return {
         "page": "overview-channel-options",
         "vessel": vessel,
-        "serialNo": serial_no,
+        "serialNumbers": resolved_serials,
         "channels": channels,
         "meta": {
             "count": len(channels),
             "database": vessel_config["database"],
             "channelTable": vessel_config["channel_table"],
+            "engineCount": len(resolved_serials),
+            "timingMs": {
+                "build": duration_ms(build_started),
+                "dbConnect": connect_ms,
+                "dbQuery": query_ms,
+            },
         },
     }
 
 
 def build_overview_trend_payload(
     vessel: str,
-    serial_no: str,
+    serial_numbers: list[str],
     channel_descriptions: list[str],
     start_time: str | None,
     end_time: str | None,
 ) -> dict[str, Any]:
+    build_started = time.perf_counter()
     validate_absolute_range(start_time, end_time)
 
     if not channel_descriptions:
         raise ValueError("At least one channelDescription is required.")
 
     vessel_config = get_vessel_config(vessel)
-    validate_vessel_serial(vessel_config, serial_no)
+    resolved_serials = validate_vessel_serials(vessel_config, serial_numbers)
+    engines_by_serial = get_vessel_engines_by_serial(vessel_config)
     quoted_data_table = quote_mysql_identifier(vessel_config["data_table"])
+    serial_placeholders = ", ".join(["%s"] * len(resolved_serials))
     channel_placeholders = ", ".join(["%s"] * len(channel_descriptions))
+    connect_started = time.perf_counter()
 
     with create_mysql_connection(vessel_config["database"]) as connection:
+        connect_ms = duration_ms(connect_started)
         with connection.cursor() as cursor:
+            range_started = time.perf_counter()
             range_start, range_end = resolve_overview_range(
-                cursor, quoted_data_table, serial_no, start_time, end_time
+                cursor, quoted_data_table, resolved_serials, start_time, end_time
+            )
+            range_query_ms = duration_ms(range_started)
+            total_range_seconds = max(
+                1,
+                int((range_end - range_start).total_seconds()),
+            )
+            target_bucket_count = max(1, MAX_OVERVIEW_POINTS_PER_SERIES // 2)
+            bucket_seconds = max(
+                1,
+                (total_range_seconds + target_bucket_count - 1) // target_bucket_count,
             )
 
+            query_started = time.perf_counter()
             cursor.execute(
                 f"""
-                WITH ranked_records AS (
+                WITH filtered_records AS (
                     SELECT
+                        {quote_mysql_identifier(MYSQL_SERIAL_COLUMN)} AS serialNo,
                         {quote_mysql_identifier(MYSQL_CHANNEL_COLUMN)} AS channelDescription,
-                        CAST(UNIX_TIMESTAMP({quote_mysql_identifier(MYSQL_TIMESTAMP_COLUMN)}) * 1000 AS SIGNED) AS timestampMs,
-                        DATE_FORMAT(
-                            {quote_mysql_identifier(MYSQL_TIMESTAMP_COLUMN)},
-                            '%%Y-%%m-%%d %%H:%%i:%%s'
-                        ) AS timestampLabel,
+                        {quote_mysql_identifier(MYSQL_TIMESTAMP_COLUMN)} AS eventTimestamp,
                         CAST(NULLIF(TRIM({quote_mysql_identifier(MYSQL_VALUE_COLUMN)}), '') AS DOUBLE) AS value,
-                        COALESCE(NULLIF({quote_mysql_identifier(MYSQL_UNIT_COLUMN)}, ''), '') AS unit,
-                        ROW_NUMBER() OVER (
-                            PARTITION BY {quote_mysql_identifier(MYSQL_CHANNEL_COLUMN)}
-                            ORDER BY {quote_mysql_identifier(MYSQL_TIMESTAMP_COLUMN)}
-                        ) AS rowNumber,
-                        COUNT(*) OVER (
-                            PARTITION BY {quote_mysql_identifier(MYSQL_CHANNEL_COLUMN)}
-                        ) AS totalRows
+                        FLOOR(
+                            TIMESTAMPDIFF(
+                                SECOND,
+                                %s,
+                                {quote_mysql_identifier(MYSQL_TIMESTAMP_COLUMN)}
+                            ) / %s
+                        ) AS bucketId
                     FROM {quoted_data_table}
-                    WHERE {quote_mysql_identifier(MYSQL_SERIAL_COLUMN)} = %s
+                    WHERE {quote_mysql_identifier(MYSQL_SERIAL_COLUMN)} IN ({serial_placeholders})
                       AND {quote_mysql_identifier(MYSQL_CHANNEL_COLUMN)} IN ({channel_placeholders})
                       AND {quote_mysql_identifier(MYSQL_TIMESTAMP_COLUMN)} BETWEEN %s AND %s
+                ),
+                bucket_edges AS (
+                    SELECT
+                        serialNo,
+                        channelDescription,
+                        bucketId,
+                        MIN(eventTimestamp) AS firstTimestamp,
+                        MAX(eventTimestamp) AS lastTimestamp
+                    FROM filtered_records
+                    GROUP BY serialNo, channelDescription, bucketId
                 )
-                SELECT
-                    channelDescription,
-                    timestampMs,
-                    timestampLabel,
-                    value,
-                    unit
-                FROM ranked_records
-                WHERE totalRows <= %s
-                   OR MOD(
-                        rowNumber - 1,
-                        GREATEST(CEIL(totalRows / %s), 1)
-                      ) = 0
-                ORDER BY timestampMs, channelDescription
+                SELECT DISTINCT
+                    records.serialNo,
+                    records.channelDescription,
+                    CAST(UNIX_TIMESTAMP(records.eventTimestamp) * 1000 AS SIGNED) AS timestampMs,
+                    DATE_FORMAT(records.eventTimestamp, '%%Y-%%m-%%d %%H:%%i:%%s') AS timestampLabel,
+                    records.value AS value
+                FROM filtered_records AS records
+                INNER JOIN bucket_edges AS edges
+                    ON edges.serialNo = records.serialNo
+                   AND edges.channelDescription = records.channelDescription
+                   AND edges.bucketId = records.bucketId
+                   AND (
+                        records.eventTimestamp = edges.firstTimestamp
+                     OR records.eventTimestamp = edges.lastTimestamp
+                   )
+                ORDER BY timestampMs, records.serialNo, channelDescription
                 """,
                 (
-                    serial_no,
+                    range_start,
+                    bucket_seconds,
+                    *resolved_serials,
                     *channel_descriptions,
                     range_start,
                     range_end,
-                    MAX_OVERVIEW_POINTS_PER_SERIES,
-                    MAX_OVERVIEW_POINTS_PER_SERIES,
                 ),
             )
             records = cursor.fetchall()
+            query_ms = duration_ms(query_started)
+
+    for record in records:
+        engine = engines_by_serial.get(str(record.get("serialNo", "")).strip(), {})
+        record["engineKey"] = engine.get("key", "")
+        record["engineLabel"] = engine.get("label", record.get("serialNo", ""))
 
     return {
         "page": "overview-trend",
         "vessel": vessel,
-        "serialNo": serial_no,
+        "serialNumbers": resolved_serials,
         "records": records,
         "meta": {
             "database": vessel_config["database"],
             "dataTable": vessel_config["data_table"],
             "rangeStartMs": int(range_start.replace(tzinfo=timezone.utc).timestamp() * 1000),
             "rangeEndMs": int(range_end.replace(tzinfo=timezone.utc).timestamp() * 1000),
+            "engines": [
+                {
+                    "key": engines_by_serial.get(serial_no, {}).get("key", ""),
+                    "label": engines_by_serial.get(serial_no, {}).get("label", serial_no),
+                    "serialNo": serial_no,
+                }
+                for serial_no in resolved_serials
+            ],
             "channelDescriptions": channel_descriptions,
             "maxPointsPerSeries": MAX_OVERVIEW_POINTS_PER_SERIES,
+            "targetBucketCount": target_bucket_count,
+            "bucketSeconds": bucket_seconds,
+            "samplingMode": "first_last_per_bucket",
+            "timingMs": {
+                "build": duration_ms(build_started),
+                "dbConnect": connect_ms,
+                "resolveRange": range_query_ms,
+                "dbQuery": query_ms,
+            },
         },
     }
 
 
 @database_api.get("/api/history/trend")
 def get_history_trend_route() -> Any:
+    request_started = time.perf_counter()
     try:
-        return jsonify(
-            build_history_payload(
-                window_minutes=request.args.get(
-                    "windowMinutes", default=DEFAULT_WINDOW_MINUTES, type=int
-                ),
-                start_time=request.args.get("startTime", default=None, type=str),
-                end_time=request.args.get("endTime", default=None, type=str),
-                series_keys=request.args.getlist("seriesKey"),
-            )
+        payload = build_history_payload(
+            window_minutes=request.args.get(
+                "windowMinutes", default=DEFAULT_WINDOW_MINUTES, type=int
+            ),
+            start_time=request.args.get("startTime", default=None, type=str),
+            end_time=request.args.get("endTime", default=None, type=str),
+            series_keys=request.args.getlist("seriesKey"),
         )
+        serialize_started = time.perf_counter()
+        response = jsonify(payload)
+        log_backend_timing(
+            "/api/history/trend",
+            status_code=200,
+            total_start=request_started,
+            serialize_start=serialize_started,
+            record_count=len(payload.get("records", [])),
+            series_count=len(payload.get("meta", {}).get("series", [])),
+        )
+        return response
     except ValueError as exc:
+        log_backend_timing(
+            "/api/history/trend",
+            status_code=400,
+            total_start=request_started,
+            error=str(exc),
+        )
         return jsonify({"error": str(exc)}), 400
     except Exception as exc:
+        log_backend_timing(
+            "/api/history/trend",
+            status_code=500,
+            total_start=request_started,
+            error=str(exc),
+        )
         return jsonify({"error": str(exc)}), 500
 
 
 @database_api.get("/api/overview/config")
 def get_overview_config_route() -> Any:
+    request_started = time.perf_counter()
     try:
-        return jsonify(build_overview_vessel_payload())
+        payload = build_overview_vessel_payload()
+        serialize_started = time.perf_counter()
+        response = jsonify(payload)
+        log_backend_timing(
+            "/api/overview/config",
+            status_code=200,
+            total_start=request_started,
+            serialize_start=serialize_started,
+            vessel_count=payload.get("meta", {}).get("count", 0),
+        )
+        return response
     except ValueError as exc:
+        log_backend_timing(
+            "/api/overview/config",
+            status_code=400,
+            total_start=request_started,
+            error=str(exc),
+        )
         return jsonify({"error": str(exc)}), 400
     except Exception as exc:
+        log_backend_timing(
+            "/api/overview/config",
+            status_code=500,
+            total_start=request_started,
+            error=str(exc),
+        )
         return jsonify({"error": str(exc)}), 500
 
 
 @database_api.get("/api/overview/channel-options")
 def get_overview_channel_options_route() -> Any:
+    request_started = time.perf_counter()
     try:
         vessel = request.args.get("vessel", default="", type=str).strip()
-        serial_no = request.args.get("serialNo", default="", type=str).strip()
+        serial_numbers = [
+            value.strip()
+            for value in request.args.getlist("serialNo")
+            if value and value.strip()
+        ]
 
         if not vessel:
             raise ValueError("vessel is required.")
 
-        if not serial_no:
-            raise ValueError("serialNo is required.")
+        if not serial_numbers:
+            raise ValueError("At least one serialNo is required.")
 
-        return jsonify(build_overview_channel_options(vessel=vessel, serial_no=serial_no))
+        payload = build_overview_channel_options(vessel=vessel, serial_numbers=serial_numbers)
+        serialize_started = time.perf_counter()
+        response = jsonify(payload)
+        timing_meta = payload.get("meta", {}).get("timingMs", {})
+        log_backend_timing(
+            "/api/overview/channel-options",
+            status_code=200,
+            total_start=request_started,
+            serialize_start=serialize_started,
+            vessel=vessel,
+            serial_count=len(serial_numbers),
+            channel_count=payload.get("meta", {}).get("count", 0),
+            db_connect_ms=timing_meta.get("dbConnect"),
+            db_query_ms=timing_meta.get("dbQuery"),
+            build_ms=timing_meta.get("build"),
+        )
+        return response
     except ValueError as exc:
+        log_backend_timing(
+            "/api/overview/channel-options",
+            status_code=400,
+            total_start=request_started,
+            error=str(exc),
+        )
         return jsonify({"error": str(exc)}), 400
     except Exception as exc:
+        log_backend_timing(
+            "/api/overview/channel-options",
+            status_code=500,
+            total_start=request_started,
+            error=str(exc),
+        )
         return jsonify({"error": str(exc)}), 500
 
 
 @database_api.get("/api/overview/trend")
 def get_overview_trend_route() -> Any:
+    request_started = time.perf_counter()
     try:
         vessel = request.args.get("vessel", default="", type=str).strip()
-        serial_no = request.args.get("serialNo", default="", type=str).strip()
+        serial_numbers = [
+            value.strip()
+            for value in request.args.getlist("serialNo")
+            if value and value.strip()
+        ]
         channel_descriptions = [
             value.strip()
             for value in request.args.getlist("channelDescription")
@@ -511,19 +754,48 @@ def get_overview_trend_route() -> Any:
         if not vessel:
             raise ValueError("vessel is required.")
 
-        if not serial_no:
-            raise ValueError("serialNo is required.")
+        if not serial_numbers:
+            raise ValueError("At least one serialNo is required.")
 
-        return jsonify(
-            build_overview_trend_payload(
-                vessel=vessel,
-                serial_no=serial_no,
-                channel_descriptions=channel_descriptions,
-                start_time=request.args.get("startTime", default=None, type=str),
-                end_time=request.args.get("endTime", default=None, type=str),
-            )
+        payload = build_overview_trend_payload(
+            vessel=vessel,
+            serial_numbers=serial_numbers,
+            channel_descriptions=channel_descriptions,
+            start_time=request.args.get("startTime", default=None, type=str),
+            end_time=request.args.get("endTime", default=None, type=str),
         )
+        serialize_started = time.perf_counter()
+        response = jsonify(payload)
+        timing_meta = payload.get("meta", {}).get("timingMs", {})
+        log_backend_timing(
+            "/api/overview/trend",
+            status_code=200,
+            total_start=request_started,
+            serialize_start=serialize_started,
+            vessel=vessel,
+            serial_count=len(serial_numbers),
+            channel_count=len(channel_descriptions),
+            record_count=len(payload.get("records", [])),
+            bucket_seconds=payload.get("meta", {}).get("bucketSeconds"),
+            db_connect_ms=timing_meta.get("dbConnect"),
+            resolve_range_ms=timing_meta.get("resolveRange"),
+            db_query_ms=timing_meta.get("dbQuery"),
+            build_ms=timing_meta.get("build"),
+        )
+        return response
     except ValueError as exc:
+        log_backend_timing(
+            "/api/overview/trend",
+            status_code=400,
+            total_start=request_started,
+            error=str(exc),
+        )
         return jsonify({"error": str(exc)}), 400
     except Exception as exc:
+        log_backend_timing(
+            "/api/overview/trend",
+            status_code=500,
+            total_start=request_started,
+            error=str(exc),
+        )
         return jsonify({"error": str(exc)}), 500

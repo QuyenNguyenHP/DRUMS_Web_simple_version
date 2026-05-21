@@ -104,7 +104,9 @@ const buildChartOption = ({
     };
 
     normalizedSeries.forEach((seriesItem) => {
-      point[seriesItem.dataKey] = Number(item[seriesItem.dataKey] ?? 0);
+      const rawValue = item[seriesItem.dataKey];
+      const numericValue = Number(rawValue);
+      point[seriesItem.dataKey] = Number.isFinite(numericValue) ? numericValue : null;
     });
 
     return point;
@@ -155,14 +157,17 @@ const buildChartOption = ({
           firstRow?.data?.timestampLabel ?? formatUtcAxisTime(firstRow?.axisValue ?? 0);
         const formattedRows = rows.map((row) => {
           const seriesConfig = seriesLookup[row.seriesName] ?? {};
-          const value = Number(row?.value?.[seriesConfig.dataKey] ?? 0);
+          const rawValue = row?.value?.[seriesConfig.dataKey];
+          const value = Number(rawValue);
           const precision = Number.isInteger(seriesConfig.precision)
             ? seriesConfig.precision
             : 2;
           const fallbackAxis = resolvedYAxes[seriesConfig.yAxisIndex ?? 0];
           const unit = seriesConfig.unit ?? fallbackAxis?.name ?? yAxisName ?? "";
 
-          return `${row.marker ?? ""}${row.seriesName}: ${value.toFixed(precision)}${unit ? ` ${unit}` : ""}`;
+          return `${row.marker ?? ""}${row.seriesName}: ${
+            Number.isFinite(value) ? value.toFixed(precision) : "--"
+          }${Number.isFinite(value) && unit ? ` ${unit}` : ""}`;
         });
 
         return [timestampLabel, ...formattedRows].join("<br/>");
@@ -247,6 +252,7 @@ const buildChartOption = ({
         itemStyle: {
           color: seriesItem.color,
         },
+        connectNulls: true,
       })),
       {
         type: "scatter",

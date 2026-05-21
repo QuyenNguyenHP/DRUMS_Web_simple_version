@@ -5,8 +5,8 @@
     "user": "admin",
     "password": "FB1bJ+EplTK8",
     "connect_timeout_seconds": 10,
-    "read_timeout_seconds": 30,
-    "write_timeout_seconds": 30
+    "read_timeout_seconds": 90,
+    "write_timeout_seconds": 90
   },
   "history_trend": {
     "database_path": "database/template.db",
@@ -33,42 +33,85 @@
         "label": "H429",
         "database": "jemla",
         "channel_table": "jemla_channel",
+        "latest_data_table": "jemla_increment",
         "data_table": "silver_shanaya",
         "engines": [
           {
             "key": "DG1",
             "label": "DG1",
-            "serialNo": "DE618Z5178"
+            "serialNo": "DG1 DE618Z5178"
           },
           {
             "key": "DG2",
             "label": "DG2",
-            "serialNo": "DE618Z4812"
+            "serialNo": "DG2 DE618Z4812"
           },
           {
             "key": "DG3",
             "label": "DG3",
-            "serialNo": "DE618Z4863"
+            "serialNo": "DG3 DE618Z4863"
           },
           {
             "key": "PORT",
             "label": "PORT",
-            "serialNo": "DK636E0039"
+            "serialNo": "PORT DK636E0039"
           },
           {
             "key": "STBD",
             "label": "STBD",
-            "serialNo": "DK636E0038"
+            "serialNo": "STBD DK636E0038"
           }
         ]
       },
       "DB45-01": {
         "label": "DB45-01",
-        "database": "",
-        "channel_table": "",
-        "data_table": "",
-        "engines": []
+        "database": "truongminh",
+        "channel_table": "truongminh_channel",
+        "latest_data_table": "truongminh_increment",
+        "data_table": "silver_truongminh",
+        "engines": [
+        {
+          "key": "DG1",
+          "label": "DG1",
+          "serialNo": "DG1 DE618Z4641"
+        },
+        {
+          "key": "DG2",
+          "label": "DG2",
+          "serialNo": "DG2 DE618Z4642"
+        },
+        {
+          "key": "DG3",
+          "label": "DG3",
+          "serialNo": "DG3 DE618Z4643"
+        }
+        ]
+      },
+      "Dubai Sky": {
+        "label": "Dubai Sky",
+        "database": "emarat_v2",
+        "channel_table": "dubai_sky_channel",
+        "latest_data_table": "dubai_increment",
+        "data_table": "silver_dubai_sky",
+        "engines": [
+        {
+          "key": "DG1",
+          "label": "DG1",
+          "serialNo": "DG1 DE618Z5340"
+        },
+        {
+          "key": "DG2",
+          "label": "DG2",
+          "serialNo": "DG2 DE618Z5341"
+        },
+        {
+          "key": "DG3",
+          "label": "DG3",
+          "serialNo": "DG3 DE618Z5342"
+        }
+        ]
       }
+
     }
   }
 }
