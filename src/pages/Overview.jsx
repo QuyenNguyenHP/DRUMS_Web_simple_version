@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import Footer from "../components/Footer";
 import Header from "../components/Header";
@@ -25,9 +25,9 @@ const cardClass =
   "rounded-[14px] border border-[#334155] bg-[#111827] p-4";
 const fieldClass =
   "w-full rounded-[12px] border border-[#334155] bg-[#0b1220] px-3 py-3 text-[14px] text-[#f8fafc] outline-none transition focus:border-[#2563eb]";
-const labelClass = "mb-2 block text-[13px] font-semibold text-[#8fb4ef]";
 const buttonClass =
-  "rounded-[12px] bg-blue-600 px-4 py-2 text-[14px] font-semibold text-white transition hover:bg-blue-500";
+  "rounded-[12px] bg-blue-600 px-4 py-2 text-[14px] font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70";
+const labelClass = "mb-2 block text-[13px] font-semibold text-[#8fb4ef]";
 
 const pad = (value) => String(value).padStart(2, "0");
 
@@ -86,28 +86,59 @@ const MultiSelectField = ({
   options,
   selectedValues,
   onToggle,
+  isOpen,
+  onOpenChange,
   disabled = false,
 }) => {
+  const containerRef = useRef(null);
   const selectedLabels = options
     .filter((option) => selectedValues.includes(option.channelDescription))
     .map((option) => option.channelDescription);
 
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined;
+    }
+
+    const handlePointerDown = (event) => {
+      if (!containerRef.current?.contains(event.target)) {
+        onOpenChange(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+    };
+  }, [isOpen, onOpenChange]);
+
   return (
-    <div className="block">
+    <div ref={containerRef} className="block">
       <span className={labelClass}>{label}</span>
-      <details className="group relative" open={false}>
-        <summary
-          className={`${fieldClass} flex cursor-pointer list-none items-center justify-between gap-3 ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
+      <div className="relative">
+        <button
+          type="button"
+          className={`${fieldClass} flex cursor-pointer items-center justify-between gap-3 ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
+          onClick={() => {
+            if (!disabled) {
+              onOpenChange(!isOpen);
+            }
+          }}
+          aria-expanded={isOpen}
+          disabled={disabled}
         >
           <span className="truncate text-left">
             {selectedLabels.length > 0
               ? `${selectedLabels.length} item(s) selected`
               : "Select chart data"}
           </span>
-          <span className="text-slate-400 transition group-open:rotate-180">▼</span>
-        </summary>
+          <span className={`text-slate-400 transition ${isOpen ? "rotate-180" : ""}`}>
+            ▼
+          </span>
+        </button>
 
-        {!disabled ? (
+        {!disabled && isOpen ? (
           <div className="absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-[12px] border border-[#334155] bg-[#0b1220] p-2 shadow-[0_16px_40px_rgba(2,6,23,0.45)]">
             {options.length === 0 ? (
               <div className="px-3 py-2 text-[13px] text-slate-400">No chart data available.</div>
@@ -136,7 +167,7 @@ const MultiSelectField = ({
             )}
           </div>
         ) : null}
-      </details>
+      </div>
     </div>
   );
 };
@@ -157,6 +188,7 @@ const Overview = () => {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [draftStartInput, setDraftStartInput] = useState(initialRange.draftStartInput);
   const [draftEndInput, setDraftEndInput] = useState(initialRange.draftEndInput);
+  const [isChartDataOpen, setIsChartDataOpen] = useState(false);
 
   const selectedVesselOption =
     overviewConfig.find((option) => option.value === selectedVessel) ?? overviewConfig[0] ?? null;
@@ -211,15 +243,14 @@ const Overview = () => {
   useEffect(() => {
     if (!selectedVessel || !selectedEngineOption?.serialNo) {
       setChannelOptions([]);
-      setSelectedChannels([]);
-      setSubmittedFilters(null);
-      setTrendPayload(null);
+      setIsChartDataOpen(false);
       return;
     }
 
     let isActive = true;
     setIsChannelOptionsLoading(true);
     setError("");
+    setIsChartDataOpen(false);
 
     fetchOverviewChannelOptions({
       vessel: selectedVessel,
@@ -230,10 +261,15 @@ const Overview = () => {
           return;
         }
 
-        setChannelOptions(Array.isArray(payload?.channels) ? payload.channels : []);
-        setSelectedChannels([]);
-        setSubmittedFilters(null);
-        setTrendPayload(null);
+        const nextChannels = Array.isArray(payload?.channels) ? payload.channels : [];
+        const nextChannelDescriptions = new Set(
+          nextChannels.map((channel) => channel.channelDescription)
+        );
+
+        setChannelOptions(nextChannels);
+        setSelectedChannels((currentValues) =>
+          currentValues.filter((value) => nextChannelDescriptions.has(value))
+        );
       })
       .catch((loadError) => {
         if (!isActive) {
@@ -241,9 +277,6 @@ const Overview = () => {
         }
 
         setChannelOptions([]);
-        setSelectedChannels([]);
-        setSubmittedFilters(null);
-        setTrendPayload(null);
         setError(
           loadError instanceof Error
             ? loadError.message
@@ -376,35 +409,40 @@ const Overview = () => {
   };
 
   const handleApplyFilters = () => {
-    const startMs = fromUtcInputValue(draftStartInput);
-    const endMs = fromUtcInputValue(draftEndInput);
+    applyFiltersForRange(draftStartInput, draftEndInput);
+  };
+
+  const applyFiltersForRange = (startInput, endInput) => {
+    const startMs = fromUtcInputValue(startInput);
+    const endMs = fromUtcInputValue(endInput);
 
     if (!startMs || !endMs) {
       setError("Both From (UTC) and To (UTC) are required.");
-      return;
+      return false;
     }
 
     if (startMs >= endMs) {
       setError("From (UTC) must be earlier than To (UTC).");
-      return;
+      return false;
     }
 
     if (!selectedVessel) {
       setError("Please select a vessel.");
-      return;
+      return false;
     }
 
     if (!selectedEngineOption?.serialNo) {
       setError("Please select an engine.");
-      return;
+      return false;
     }
 
     if (selectedChannels.length === 0) {
       setError("Please select at least one chart data item before applying.");
-      return;
+      return false;
     }
 
     setError("");
+    setIsChartDataOpen(false);
     setSubmittedFilters({
       vessel: selectedVessel,
       serialNo: selectedEngineOption.serialNo,
@@ -414,6 +452,7 @@ const Overview = () => {
       startMs,
       endMs,
     });
+    return true;
   };
 
   const handleShiftRange = (direction) => {
@@ -430,7 +469,7 @@ const Overview = () => {
       return;
     }
 
-    setError("");
+    applyFiltersForRange(nextStartInput, nextEndInput);
   };
 
   return (
@@ -473,9 +512,14 @@ const Overview = () => {
                     type="button"
                     className={buttonClass}
                     onClick={handleApplyFilters}
-                    disabled={isConfigLoading}
+                    disabled={isConfigLoading || isChannelOptionsLoading || isTrendLoading}
                   >
-                    Apply Filters
+                    <span className="inline-flex items-center gap-2">
+                      {isTrendLoading ? (
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      ) : null}
+                      <span>{isTrendLoading ? "Loading..." : "Apply Filters"}</span>
+                    </span>
                   </button>
                 </div>
 
@@ -499,10 +543,7 @@ const Overview = () => {
                   <SelectField
                     label="Engine"
                     value={selectedEngine}
-                    onChange={(event) => {
-                      setSelectedEngine(event.target.value);
-                      resetDraftRange();
-                    }}
+                    onChange={(event) => setSelectedEngine(event.target.value)}
                     disabled={isConfigLoading || engineOptions.length === 0}
                   >
                     {engineOptions.length === 0 ? (
@@ -521,6 +562,8 @@ const Overview = () => {
                     options={channelOptions}
                     selectedValues={selectedChannels}
                     onToggle={handleChannelToggle}
+                    isOpen={isChartDataOpen}
+                    onOpenChange={setIsChartDataOpen}
                     disabled={isChannelOptionsLoading || channelOptions.length === 0}
                   />
                 </div>
@@ -588,12 +631,18 @@ const Overview = () => {
             ) : null}
 
             <div className="flex-1 rounded-[12px] border border-[#334155] bg-[#0f172a] p-4">
+              {isTrendLoading ? (
+                <div className="mb-4 inline-flex items-center gap-2 rounded-[10px] border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-[13px] font-semibold text-sky-200">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Loading trend data from backend...
+                </div>
+              ) : null}
               <TimeSeriesLineChart
                 chartData={chartData}
                 series={chartSeries}
                 rangeStartMs={trendPayload?.meta?.rangeStartMs ?? null}
                 rangeEndMs={trendPayload?.meta?.rangeEndMs ?? null}
-                chartHeight={620}
+                chartHeight={400}
                 title={`${selectedVesselOption?.label ?? "Vessel"} - ${
                   submittedFilters?.engineLabel ?? selectedEngineOption?.label ?? "Engine"
                 } Trend`}
