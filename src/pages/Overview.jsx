@@ -81,6 +81,66 @@ const SelectField = ({ label, value, onChange, children, disabled = false }) => 
   </label>
 );
 
+const MultiSelectField = ({
+  label,
+  options,
+  selectedValues,
+  onToggle,
+  disabled = false,
+}) => {
+  const selectedLabels = options
+    .filter((option) => selectedValues.includes(option.channelDescription))
+    .map((option) => option.channelDescription);
+
+  return (
+    <div className="block">
+      <span className={labelClass}>{label}</span>
+      <details className="group relative" open={false}>
+        <summary
+          className={`${fieldClass} flex cursor-pointer list-none items-center justify-between gap-3 ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
+        >
+          <span className="truncate text-left">
+            {selectedLabels.length > 0
+              ? `${selectedLabels.length} item(s) selected`
+              : "Select chart data"}
+          </span>
+          <span className="text-slate-400 transition group-open:rotate-180">▼</span>
+        </summary>
+
+        {!disabled ? (
+          <div className="absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-[12px] border border-[#334155] bg-[#0b1220] p-2 shadow-[0_16px_40px_rgba(2,6,23,0.45)]">
+            {options.length === 0 ? (
+              <div className="px-3 py-2 text-[13px] text-slate-400">No chart data available.</div>
+            ) : (
+              options.map((option) => (
+                <label
+                  key={option.channelDescription}
+                  className="flex cursor-pointer items-start gap-3 rounded-[10px] px-3 py-2 text-[#f8fafc] transition hover:bg-slate-800"
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-1 h-4 w-4 rounded border-slate-500 bg-transparent accent-blue-500"
+                    checked={selectedValues.includes(option.channelDescription)}
+                    onChange={() => onToggle(option.channelDescription)}
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-[13px] leading-5">
+                      {option.channelDescription}
+                    </span>
+                    {option.unit ? (
+                      <span className="block text-[11px] text-slate-400">{option.unit}</span>
+                    ) : null}
+                  </span>
+                </label>
+              ))
+            )}
+          </div>
+        ) : null}
+      </details>
+    </div>
+  );
+};
+
 const Overview = () => {
   const initialRange = useMemo(buildInitialUtcRange, []);
   const [overviewConfig, setOverviewConfig] = useState([]);
@@ -307,8 +367,12 @@ const Overview = () => {
     setDraftEndInput(nextRange.draftEndInput);
   };
 
-  const handleChannelChange = (event) => {
-    setSelectedChannels(Array.from(event.target.selectedOptions, (option) => option.value));
+  const handleChannelToggle = (channelDescription) => {
+    setSelectedChannels((currentValues) =>
+      currentValues.includes(channelDescription)
+        ? currentValues.filter((value) => value !== channelDescription)
+        : [...currentValues, channelDescription]
+    );
   };
 
   const handleApplyFilters = () => {
@@ -452,29 +516,13 @@ const Overview = () => {
                     )}
                   </SelectField>
 
-                  <label className="block">
-                    <span className={labelClass}>Chart data</span>
-                    <select
-                      multiple
-                      value={selectedChannels}
-                      onChange={handleChannelChange}
-                      disabled={isChannelOptionsLoading || channelOptions.length === 0}
-                      className={`${fieldClass} min-h-[152px]`}
-                    >
-                      {channelOptions.map((channelOption) => (
-                        <option
-                          key={channelOption.channelDescription}
-                          value={channelOption.channelDescription}
-                        >
-                          {channelOption.channelDescription}
-                          {channelOption.unit ? ` (${channelOption.unit})` : ""}
-                        </option>
-                      ))}
-                    </select>
-                    <p className="mt-2 text-[11px] text-slate-400">
-                      Hold `Ctrl` or `Cmd` to select multiple items.
-                    </p>
-                  </label>
+                  <MultiSelectField
+                    label="Chart data"
+                    options={channelOptions}
+                    selectedValues={selectedChannels}
+                    onToggle={handleChannelToggle}
+                    disabled={isChannelOptionsLoading || channelOptions.length === 0}
+                  />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 text-[12px] text-slate-400">
