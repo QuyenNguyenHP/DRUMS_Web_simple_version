@@ -1,0 +1,74 @@
+{
+  "database_connection": {
+    "host": "146.235.17.60",
+    "port": 3306,
+    "user": "admin",
+    "password": "FB1bJ+EplTK8",
+    "connect_timeout_seconds": 10,
+    "read_timeout_seconds": 30,
+    "write_timeout_seconds": 30
+  },
+  "history_trend": {
+    "database_path": "database/template.db",
+    "table_name": "trend_history",
+    "timestamp_column": "timestamp_utc",
+    "series_key_column": "series_key",
+    "series_label_column": "series_label",
+    "value_column": "value",
+    "unit_column": "unit",
+    "default_window_minutes": 240,
+    "default_series": ["line_speed", "motor_current"]
+  },
+  "overview_trend": {
+    "default_window_hours": 24,
+    "max_points_per_series": 350,
+    "timestamp_column": "TimeStamp",
+    "serial_column": "SerialNo",
+    "channel_column": "ChannelDescription",
+    "value_column": "Value",
+    "unit_column": "Unit",
+    "channel_filter_unit_exclude": "On/Off",
+    "vessels": {
+      "H429": {
+        "label": "H429",
+        "database": "jemla",
+        "channel_table": "jemla_channel",
+        "data_table": "silver_shanaya",
+        "engines": [
+          {
+            "key": "DG1",
+            "label": "DG1",
+            "serialNo": "DE618Z5178"
+          },
+          {
+            "key": "DG2",
+            "label": "DG2",
+            "serialNo": "DE618Z4812"
+          },
+          {
+            "key": "DG3",
+            "label": "DG3",
+            "serialNo": "DE618Z4863"
+          },
+          {
+            "key": "PORT",
+            "label": "PORT",
+            "serialNo": "DK636E0039"
+          },
+          {
+            "key": "STBD",
+            "label": "STBD",
+            "serialNo": "DK636E0038"
+          }
+        ]
+      },
+      "DB45-01": {
+        "label": "DB45-01",
+        "database": "",
+        "channel_table": "",
+        "data_table": "",
+        "engines": []
+      }
+    }
+  }
+}
