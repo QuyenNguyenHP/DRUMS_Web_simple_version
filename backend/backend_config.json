@@ -67,7 +67,10 @@
         "label": "DB45-01",
         "database": "truongminh",
         "channel_table": "truongminh_channel",
+<<<<<<< HEAD
         "latest_data_table": "truongminh_increment",
+=======
+>>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
         "data_table": "silver_truongminh",
         "engines": [
         {
@@ -85,6 +88,7 @@
           "label": "DG3",
           "serialNo": "DG3 DE618Z4643"
         }
+<<<<<<< HEAD
         ]
       },
       "Dubai Sky": {
@@ -109,6 +113,9 @@
           "label": "DG3",
           "serialNo": "DG3 DE618Z5342"
         }
+=======
+
+>>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
         ]
       }
 
