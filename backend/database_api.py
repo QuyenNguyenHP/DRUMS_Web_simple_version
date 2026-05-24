@@ -419,11 +419,7 @@ def resolve_overview_range(
     return latest_timestamp - timedelta(hours=DEFAULT_OVERVIEW_WINDOW_HOURS), latest_timestamp
 
 
-<<<<<<< HEAD
 def build_overview_channel_options(vessel: str, serial_numbers: list[str]) -> dict[str, Any]:
-=======
-def build_overview_channel_options(vessel: str, serial_no: str) -> dict[str, Any]:
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
     build_started = time.perf_counter()
     vessel_config = get_vessel_config(vessel)
     resolved_serials = validate_vessel_serials(vessel_config, serial_numbers)
@@ -431,10 +427,7 @@ def build_overview_channel_options(vessel: str, serial_no: str) -> dict[str, Any
     quoted_channel_column = quote_mysql_identifier(MYSQL_CHANNEL_COLUMN)
     quoted_serial_column = quote_mysql_identifier(MYSQL_SERIAL_COLUMN)
     quoted_unit_column = quote_mysql_identifier(MYSQL_UNIT_COLUMN)
-<<<<<<< HEAD
     serial_placeholders = ", ".join(["%s"] * len(resolved_serials))
-=======
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
     connect_started = time.perf_counter()
 
     with create_mysql_connection(vessel_config["database"]) as connection:
@@ -447,11 +440,7 @@ def build_overview_channel_options(vessel: str, serial_no: str) -> dict[str, Any
                     {quoted_channel_column} AS channelDescription,
                     COALESCE(NULLIF({quoted_unit_column}, ''), '') AS unit
                 FROM {quoted_channel_table}
-<<<<<<< HEAD
                 WHERE {quoted_serial_column} IN ({serial_placeholders})
-=======
-                WHERE {quoted_serial_column} = %s
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
                   AND (
                         {quoted_unit_column} IS NULL
                      OR {quoted_unit_column} = ''
@@ -459,11 +448,7 @@ def build_overview_channel_options(vessel: str, serial_no: str) -> dict[str, Any
                   )
                 ORDER BY {quoted_channel_column}
                 """,
-<<<<<<< HEAD
                 (*resolved_serials, CHANNEL_FILTER_UNIT_EXCLUDE),
-=======
-                (serial_no, CHANNEL_FILTER_UNIT_EXCLUDE),
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
             )
             channels = cursor.fetchall()
             query_ms = duration_ms(query_started)
@@ -477,10 +462,7 @@ def build_overview_channel_options(vessel: str, serial_no: str) -> dict[str, Any
             "count": len(channels),
             "database": vessel_config["database"],
             "channelTable": vessel_config["channel_table"],
-<<<<<<< HEAD
             "engineCount": len(resolved_serials),
-=======
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
             "timingMs": {
                 "build": duration_ms(build_started),
                 "dbConnect": connect_ms,
@@ -528,16 +510,6 @@ def build_overview_trend_payload(
                 1,
                 (total_range_seconds + target_bucket_count - 1) // target_bucket_count,
             )
-            range_query_ms = duration_ms(range_started)
-            total_range_seconds = max(
-                1,
-                int((range_end - range_start).total_seconds()),
-            )
-            target_bucket_count = max(1, MAX_OVERVIEW_POINTS_PER_SERIES // 2)
-            bucket_seconds = max(
-                1,
-                (total_range_seconds + target_bucket_count - 1) // target_bucket_count,
-            )
 
             query_started = time.perf_counter()
             cursor.execute(
@@ -562,56 +534,35 @@ def build_overview_trend_payload(
                 ),
                 bucket_edges AS (
                     SELECT
-<<<<<<< HEAD
                         serialNo,
-=======
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
                         channelDescription,
                         bucketId,
                         MIN(eventTimestamp) AS firstTimestamp,
                         MAX(eventTimestamp) AS lastTimestamp
                     FROM filtered_records
-<<<<<<< HEAD
                     GROUP BY serialNo, channelDescription, bucketId
                 )
                 SELECT DISTINCT
                     records.serialNo,
-=======
-                    GROUP BY channelDescription, bucketId
-                )
-                SELECT DISTINCT
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
                     records.channelDescription,
                     CAST(UNIX_TIMESTAMP(records.eventTimestamp) * 1000 AS SIGNED) AS timestampMs,
                     DATE_FORMAT(records.eventTimestamp, '%%Y-%%m-%%d %%H:%%i:%%s') AS timestampLabel,
                     records.value AS value
                 FROM filtered_records AS records
                 INNER JOIN bucket_edges AS edges
-<<<<<<< HEAD
                     ON edges.serialNo = records.serialNo
                    AND edges.channelDescription = records.channelDescription
-=======
-                    ON edges.channelDescription = records.channelDescription
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
                    AND edges.bucketId = records.bucketId
                    AND (
                         records.eventTimestamp = edges.firstTimestamp
                      OR records.eventTimestamp = edges.lastTimestamp
                    )
-<<<<<<< HEAD
                 ORDER BY timestampMs, records.serialNo, channelDescription
-=======
-                ORDER BY timestampMs, channelDescription
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
                 """,
                 (
                     range_start,
                     bucket_seconds,
-<<<<<<< HEAD
                     *resolved_serials,
-=======
-                    serial_no,
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
                     *channel_descriptions,
                     range_start,
                     range_end,
@@ -619,14 +570,11 @@ def build_overview_trend_payload(
             )
             records = cursor.fetchall()
             query_ms = duration_ms(query_started)
-<<<<<<< HEAD
 
     for record in records:
         engine = engines_by_serial.get(str(record.get("serialNo", "")).strip(), {})
         record["engineKey"] = engine.get("key", "")
         record["engineLabel"] = engine.get("label", record.get("serialNo", ""))
-=======
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
 
     return {
         "page": "overview-trend",
@@ -752,11 +700,7 @@ def get_overview_channel_options_route() -> Any:
         if not serial_numbers:
             raise ValueError("At least one serialNo is required.")
 
-<<<<<<< HEAD
         payload = build_overview_channel_options(vessel=vessel, serial_numbers=serial_numbers)
-=======
-        payload = build_overview_channel_options(vessel=vessel, serial_no=serial_no)
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
         serialize_started = time.perf_counter()
         response = jsonify(payload)
         timing_meta = payload.get("meta", {}).get("timingMs", {})
@@ -766,11 +710,7 @@ def get_overview_channel_options_route() -> Any:
             total_start=request_started,
             serialize_start=serialize_started,
             vessel=vessel,
-<<<<<<< HEAD
             serial_count=len(serial_numbers),
-=======
-            serial_no=serial_no,
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
             channel_count=payload.get("meta", {}).get("count", 0),
             db_connect_ms=timing_meta.get("dbConnect"),
             db_query_ms=timing_meta.get("dbQuery"),
@@ -819,11 +759,7 @@ def get_overview_trend_route() -> Any:
 
         payload = build_overview_trend_payload(
             vessel=vessel,
-<<<<<<< HEAD
             serial_numbers=serial_numbers,
-=======
-            serial_no=serial_no,
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
             channel_descriptions=channel_descriptions,
             start_time=request.args.get("startTime", default=None, type=str),
             end_time=request.args.get("endTime", default=None, type=str),
@@ -837,11 +773,7 @@ def get_overview_trend_route() -> Any:
             total_start=request_started,
             serialize_start=serialize_started,
             vessel=vessel,
-<<<<<<< HEAD
             serial_count=len(serial_numbers),
-=======
-            serial_no=serial_no,
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
             channel_count=len(channel_descriptions),
             record_count=len(payload.get("records", [])),
             bucket_seconds=payload.get("meta", {}).get("bucketSeconds"),

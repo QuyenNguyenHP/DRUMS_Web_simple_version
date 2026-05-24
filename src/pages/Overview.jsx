@@ -106,38 +106,17 @@ const MultiSelectField = ({
   onToggle,
   isOpen,
   onOpenChange,
-<<<<<<< HEAD
   getOptionValue,
   getOptionLabel,
   getOptionMeta,
   emptyMessage,
   placeholder,
-=======
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
   disabled = false,
 }) => {
   const containerRef = useRef(null);
   const selectedLabels = options
     .filter((option) => selectedValues.includes(getOptionValue(option)))
     .map((option) => getOptionLabel(option));
-
-  useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-
-    const handlePointerDown = (event) => {
-      if (!containerRef.current?.contains(event.target)) {
-        onOpenChange(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-    };
-  }, [isOpen, onOpenChange]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -178,11 +157,7 @@ const MultiSelectField = ({
               : placeholder}
           </span>
           <span className={`text-slate-400 transition ${isOpen ? "rotate-180" : ""}`}>
-<<<<<<< HEAD
             v
-=======
-            ▼
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
           </span>
         </button>
 
@@ -241,10 +216,7 @@ const Overview = () => {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [draftStartInput, setDraftStartInput] = useState(initialRange.draftStartInput);
   const [draftEndInput, setDraftEndInput] = useState(initialRange.draftEndInput);
-<<<<<<< HEAD
   const [isEngineOpen, setIsEngineOpen] = useState(false);
-=======
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
   const [isChartDataOpen, setIsChartDataOpen] = useState(false);
 
   const selectedVesselOption =
@@ -325,11 +297,8 @@ const Overview = () => {
   useEffect(() => {
     if (!selectedVessel || selectedSerialNumbers.length === 0) {
       setChannelOptions([]);
-<<<<<<< HEAD
       setSelectedChannels([]);
       setIsEngineOpen(false);
-=======
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
       setIsChartDataOpen(false);
       return;
     }
@@ -498,17 +467,12 @@ const Overview = () => {
     );
   };
 
-<<<<<<< HEAD
   const handleEngineToggle = (engineKey) => {
     setSelectedEngines((currentValues) =>
       currentValues.includes(engineKey)
         ? currentValues.filter((value) => value !== engineKey)
         : [...currentValues, engineKey]
     );
-=======
-  const handleApplyFilters = () => {
-    applyFiltersForRange(draftStartInput, draftEndInput);
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
   };
 
   const applyFiltersForRange = (startInput, endInput) => {
@@ -530,13 +494,8 @@ const Overview = () => {
       return false;
     }
 
-<<<<<<< HEAD
     if (selectedEngineOptions.length === 0) {
       setError("Please select at least one engine.");
-=======
-    if (!selectedEngineOption?.serialNo) {
-      setError("Please select an engine.");
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
       return false;
     }
 
@@ -546,10 +505,7 @@ const Overview = () => {
     }
 
     setError("");
-<<<<<<< HEAD
     setIsEngineOpen(false);
-=======
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
     setIsChartDataOpen(false);
     setSubmittedFilters({
       vessel: selectedVessel,
@@ -560,13 +516,10 @@ const Overview = () => {
       endMs,
     });
     return true;
-<<<<<<< HEAD
   };
 
   const handleApplyFilters = () => {
     applyFiltersForRange(draftStartInput, draftEndInput);
-=======
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
   };
 
   const handleShiftRange = (direction) => {
@@ -676,7 +629,6 @@ const Overview = () => {
 
                   <MultiSelectField
                     label="Engine"
-<<<<<<< HEAD
                     options={engineOptions}
                     selectedValues={selectedEngines}
                     onToggle={handleEngineToggle}
@@ -687,10 +639,6 @@ const Overview = () => {
                     getOptionMeta={(option) => option.serialNo}
                     placeholder="Select engine"
                     emptyMessage="No engine configured."
-=======
-                    value={selectedEngine}
-                    onChange={(event) => setSelectedEngine(event.target.value)}
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
                     disabled={isConfigLoading || engineOptions.length === 0}
                   />
 
@@ -701,14 +649,11 @@ const Overview = () => {
                     onToggle={handleChannelToggle}
                     isOpen={isChartDataOpen}
                     onOpenChange={setIsChartDataOpen}
-<<<<<<< HEAD
                     getOptionValue={(option) => option.channelDescription}
                     getOptionLabel={(option) => option.channelDescription}
                     getOptionMeta={(option) => option.unit}
                     placeholder="Select chart data"
                     emptyMessage="No chart data available."
-=======
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
                     disabled={isChannelOptionsLoading || channelOptions.length === 0}
                   />
                 </div>
@@ -784,13 +729,8 @@ const Overview = () => {
                 rangeStartMs={trendPayload?.meta?.rangeStartMs ?? null}
                 rangeEndMs={trendPayload?.meta?.rangeEndMs ?? null}
                 chartHeight={400}
-<<<<<<< HEAD
                 title={`${selectedVesselOption?.label ?? "Vessel"} - ${appliedEngineTitle} Trend`}
-=======
-                title={`${selectedVesselOption?.label ?? "Vessel"} - ${
-                  submittedFilters?.engineLabel ?? selectedEngineOption?.label ?? "Engine"
-                } Trend`}
->>>>>>> cec7b08bb5fc1c0cc2bdd15c51fcbd2c2e367c90
+                title={`${selectedVesselOption?.label ?? "Vessel"} - ${appliedEngineTitle} Trend`}
                 yAxisName="Selected values"
                 emptyMessage={
                   isTrendLoading
