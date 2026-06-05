@@ -300,6 +300,19 @@ const TimeSeriesLineChart = ({
   const resizeObserverRef = useRef(null);
   const hasLoggedChartErrorRef = useRef(false);
   const [isAverageVisible, setIsAverageVisible] = useState(true);
+
+  const handleDownload = () => {
+    if (!chartInstanceRef.current) return;
+    const url = chartInstanceRef.current.getDataURL({
+      type: "png",
+      pixelRatio: 2,
+      backgroundColor: "#0f172a",
+    });
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${title || "chart"}.png`;
+    link.click();
+  };
   const seriesAverages = useMemo(
     () => calculateSeriesAverages(chartData, series),
     [chartData, series]
@@ -379,6 +392,35 @@ const TimeSeriesLineChart = ({
         )}
         <div className="relative w-full">
           <div ref={chartRef} className="w-full" style={{ height: `${chartHeight}px` }} />
+          <button
+            type="button"
+            className="absolute right-14 top-1 z-[2] flex h-9 w-9 items-center justify-center rounded-[8px] border border-[#334155] bg-[#0b1220e6] text-[#cbd5e1] transition hover:border-[#475569] hover:text-[#f8fafc]"
+            onClick={handleDownload}
+            aria-label="Download chart as PNG"
+            title="Download PNG"
+          >
+            <svg
+              aria-hidden="true"
+              className="h-4 w-4"
+              viewBox="0 0 16 16"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M8 2V10M8 10L5 7M8 10L11 7"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M3 13H13"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
           {seriesAverages.length ? (
             <button
               type="button"
