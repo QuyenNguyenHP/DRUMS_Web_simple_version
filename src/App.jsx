@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Route, Routes, useLocation, useNavigationType } from "react-router-dom";
 
 import Overview from "./pages/Overview";
+import Engine from "./pages/Engine";
 
 const PAGE_META = {
   "/": {
@@ -23,10 +24,6 @@ const PAGE_META = {
   "/fo-consumption": {
     title: "F.O. Consumption | HMI Starter",
     description: "Fuel oil consumption dashboard starter page.",
-  },
-  "/pid": {
-    title: "P&ID | HMI Starter",
-    description: "Process and instrumentation diagram starter page.",
   },
   "/alarms": {
     title: "Alarms | HMI Starter",
@@ -57,11 +54,10 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<Overview />} />
-      <Route path="/engine" element={<Overview />} />
+      <Route path="/engine" element={<Engine />} />
       <Route path="/pressure_trend" element={<Overview />} />
       <Route path="/exh_temp_trend" element={<Overview />} />
       <Route path="/fo-consumption" element={<Overview />} />
-      <Route path="/pid" element={<Overview />} />
       <Route path="/alarms" element={<Overview />} />
       <Route path="*" element={<Overview />} />
     </Routes>

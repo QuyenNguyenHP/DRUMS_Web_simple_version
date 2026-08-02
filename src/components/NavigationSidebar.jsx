@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 
 const NAV_ITEMS = [
   { to: "/", label: "Overview", icon: "/overview.svg" },
-  { to: "/engine", label: "Pending 1", icon: "/engine.svg" },
+  { to: "/engine", label: "Engine", icon: "/engine.svg" },
   { to: "/pressure_trend", label: "Pending 2", icon: "/overview.svg" },
 ];
 

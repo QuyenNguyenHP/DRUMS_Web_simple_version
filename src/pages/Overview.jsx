@@ -730,7 +730,6 @@ const Overview = () => {
                 rangeEndMs={trendPayload?.meta?.rangeEndMs ?? null}
                 chartHeight={400}
                 title={`${selectedVesselOption?.label ?? "Vessel"} - ${appliedEngineTitle} Trend`}
-                title={`${selectedVesselOption?.label ?? "Vessel"} - ${appliedEngineTitle} Trend`}
                 yAxisName="Selected values"
                 emptyMessage={
                   isTrendLoading
