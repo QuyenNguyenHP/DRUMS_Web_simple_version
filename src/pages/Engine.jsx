@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Footer from "../components/Footer";
 import Header from "../components/Header";
@@ -22,35 +22,17 @@ const SVG_SOURCE = "/Engine_indicator.svg";
 // { elementId: "temperature-value", dataKey: "temperature", unit: " °C", digits: 1 }
 const getValues = (payload) => payload?.values ?? payload?.data ?? {};
 
-const buildSvgElementCache = (svgRoot, payload) => {
-  const values = getValues(payload);
-  const cache = new Map();
-
-  Object.keys(values).forEach((elementId) => {
-    const element = svgRoot.querySelector(`[id="${elementId}"]`);
-
-    if (element) {
-      cache.set(elementId, element);
-    }
-  });
-
-  return cache;
-};
-
-const updateSvgValues = (svgRoot, payload, elementCacheRef) => {
-  if (!svgRoot) {
-    return;
+const renderSvgValues = (markup, payload) => {
+  if (!markup) {
+    return "";
   }
 
   const values = getValues(payload);
-  const cachedElements = elementCacheRef.current;
-
-  if (!cachedElements || cachedElements.size === 0) {
-    elementCacheRef.current = buildSvgElementCache(svgRoot, payload);
-  }
+  const parser = new DOMParser();
+  const document = parser.parseFromString(markup, "image/svg+xml");
 
   Object.entries(values).forEach(([elementId, value]) => {
-    const element = elementCacheRef.current.get(elementId);
+    const element = document.getElementById(elementId);
 
     if (!element) {
       return;
@@ -59,18 +41,14 @@ const updateSvgValues = (svgRoot, payload, elementCacheRef) => {
     const nextValue =
       value === null || value === undefined || value === "" ? "--" : String(value);
 
-    if (element.dataset.value === nextValue) {
-      return;
-    }
-
     element.textContent = nextValue;
-    element.dataset.value = nextValue;
+    element.setAttribute("data-value", nextValue);
   });
+
+  return new XMLSerializer().serializeToString(document.documentElement);
 };
 
 const Engine = () => {
-  const svgContainerRef = useRef(null);
-  const svgElementCacheRef = useRef(new Map());
   const [svgMarkup, setSvgMarkup] = useState("");
   const [svgError, setSvgError] = useState("");
   const [payload, setPayload] = useState(null);
@@ -94,16 +72,19 @@ const Engine = () => {
   );
   const matchedElementCount = Number(payload?.meta?.matchedElementCount ?? 0);
   const snapshotRecordCount = Number(payload?.meta?.snapshotRecordCount ?? 0);
-  const latestTimestampLabel = payload?.meta?.latestTimestampLabel ?? "Timestamp: --";
   const unmatchedChannels = Array.isArray(payload?.meta?.unmatchedChannels)
     ? payload.meta.unmatchedChannels
     : [];
+  const renderedSvgMarkup = useMemo(
+    () => renderSvgValues(svgMarkup, payload),
+    [payload, svgMarkup]
+  );
 
   useEffect(() => {
     let isActive = true;
     setVesselError("");
 
-    fetchVesselConfig()
+    fetchVesselConfig({ includeLatestRange: false })
       .then((response) => {
         if (!isActive) {
           return;
@@ -147,7 +128,7 @@ const Engine = () => {
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch(SVG_SOURCE, { signal: controller.signal })
+    fetch(SVG_SOURCE, { cache: "no-store", signal: controller.signal })
       .then((response) => {
         if (!response.ok) {
           throw new Error(`Unable to load SVG (${response.status}).`);
@@ -156,7 +137,6 @@ const Engine = () => {
         return response.text();
       })
       .then((markup) => {
-        svgElementCacheRef.current = new Map();
         setSvgMarkup(markup);
         setSvgError("");
       })
@@ -225,14 +205,6 @@ const Engine = () => {
     };
   }, [selectedEngine, selectedVessel]);
 
-  useEffect(() => {
-    updateSvgValues(
-      svgContainerRef.current?.querySelector("svg"),
-      payload,
-      svgElementCacheRef
-    );
-  }, [payload, svgMarkup]);
-
   return (
     <div className="flex min-h-screen w-full flex-col overflow-hidden bg-[#07111f]">
       <Header />
@@ -242,16 +214,9 @@ const Engine = () => {
 
         <section className="flex-1 min-w-0 p-3 lg:p-5">
           <div
-            className="relative flex h-full min-h-[420px] flex-col items-center justify-center overflow-auto rounded-lg border border-slate-700 bg-slate-800/90 bg-no-repeat lg:min-h-[calc(100vh-116px)]"
-            style={{
-              backgroundImage: "url('/Engine_back_ground.png')",
-              backgroundPosition: "center",
-              backgroundSize: `${ENGINE_DISPLAY_WIDTH}px ${ENGINE_DISPLAY_HEIGHT}px`,
-              backgroundClip: "content-box",
-              backgroundOrigin: "content-box",
-            }}
+            className="relative flex h-full min-h-[420px] flex-col items-center justify-center overflow-auto rounded-lg border border-slate-700 bg-slate-800/90 lg:min-h-[calc(100vh-116px)]"
           >
-            <div className="absolute left-4 right-4 top-4 z-20 max-w-[1040px]">
+            <div className="absolute left-4 right-4 top-4 z-20 max-w-[500px]">
               <VesselEngineSelector
                 vesselOptions={vesselOptions}
                 selectedVessel={selectedVessel}
@@ -293,17 +258,6 @@ const Engine = () => {
                   {vesselError}
                 </div>
               ) : null}
-              <div className="mt-2 inline-flex flex-wrap items-center gap-3 rounded-[12px] border border-slate-700/80 bg-slate-950/65 px-3 py-2 text-[12px] text-slate-300 backdrop-blur-sm">
-                <span>
-                  {latestTimestampLabel}
-                </span>
-                <span>
-                  Snapshot rows: <strong className="text-slate-100">{snapshotRecordCount}</strong>
-                </span>
-                <span>
-                  SVG matched: <strong className="text-slate-100">{matchedElementCount}</strong>
-                </span>
-              </div>
               {snapshotRecordCount > 0 && matchedElementCount === 0 ? (
                 <div className="mt-2 rounded-[12px] border border-amber-500/60 bg-amber-950/40 px-3 py-2 text-[12px] text-amber-100">
                   Chua map duoc channel DB vao SVG. Unmatched sample:{" "}
@@ -313,17 +267,25 @@ const Engine = () => {
             </div>
 
             {svgMarkup ? (
-              <div className="relative shrink-0">
+              <div
+                className="relative shrink-0 overflow-hidden"
+                style={{
+                  width: ENGINE_DISPLAY_WIDTH,
+                  height: ENGINE_DISPLAY_HEIGHT,
+                }}
+              >
+                <img
+                  src="/Engine_back_ground.png"
+                  alt=""
+                  aria-hidden="true"
+                  draggable="false"
+                  className="pointer-events-none absolute inset-0 block h-full w-full select-none"
+                />
                 <div
-                  ref={svgContainerRef}
                   role="img"
                   aria-label="Engine monitoring diagram"
-                  className="shrink-0 [&>svg]:block [&>svg]:h-full [&>svg]:w-full"
-                  style={{
-                    width: ENGINE_DISPLAY_WIDTH,
-                    height: ENGINE_DISPLAY_HEIGHT,
-                  }}
-                  dangerouslySetInnerHTML={{ __html: svgMarkup }}
+                  className="absolute inset-0 [&>svg]:block [&>svg]:h-full [&>svg]:w-full"
+                  dangerouslySetInnerHTML={{ __html: renderedSvgMarkup }}
                 />
                 {isDataLoading ? (
                   <div className="absolute inset-0 flex items-center justify-center bg-slate-950/28 backdrop-blur-[1px]">

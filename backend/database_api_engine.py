@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import re
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from flask import Blueprint, jsonify, request
 
 from database_api_overview import (
+    LATEST_TIMESTAMP_COLUMN,
     MYSQL_CHANNEL_COLUMN,
     MYSQL_SERIAL_COLUMN,
     MYSQL_TIMESTAMP_COLUMN,
@@ -21,6 +22,7 @@ from database_api_overview import (
 )
 
 engine_api = Blueprint("engine_api", __name__)
+ENGINE_SNAPSHOT_LOOKBACK_SECONDS = 60
 ENGINE_BINDING_LOOKUP_CACHE: dict[str, dict[str, str]] = {}
 ENGINE_PAYLOAD_CACHE: dict[tuple[str, str, int | None], dict[str, Any]] = {}
 
@@ -52,6 +54,13 @@ def format_engine_timestamp_label(value: datetime | None) -> str:
     return f"Timestamp: {value.strftime('%Y-%m-%d %H:%M:%S')}"
 
 
+def format_engine_timestamp_value(value: datetime | None) -> str:
+    if value is None:
+        return "--"
+
+    return value.strftime("%Y-%m-%d %H:%M:%S")
+
+
 def map_engine_snapshot_to_svg_values(
     rows: list[dict[str, Any]],
     *,
@@ -61,7 +70,7 @@ def map_engine_snapshot_to_svg_values(
 ) -> tuple[dict[str, Any], list[str], list[str]]:
     values: dict[str, Any] = {
         "engine_label": engine_label or "--",
-        "timestamp_text": format_engine_timestamp_label(latest_timestamp),
+        "timestamp_text": format_engine_timestamp_value(latest_timestamp),
     }
     matched_ids: set[str] = set()
     unmatched_channels: list[str] = []
@@ -111,12 +120,21 @@ def build_engine_payload(vessel: str, engine_key: str) -> dict[str, Any]:
         ENGINE_BINDING_LOOKUP_CACHE[vessel] = engine_binding_lookup
 
     data_table = vessel_config.get("data_table")
-    latest_timestamp_ms = None
-    latest_timestamp = None
+    latest_data_table = vessel_config.get("latest_data_table")
+
+    if not latest_data_table:
+        raise ValueError(f"Vessel {vessel} is missing latest_data_table configuration.")
+
+    latest_data_timestamp_ms = None
+    latest_data_timestamp = None
+    snapshot_timestamp_ms = None
+    snapshot_timestamp = None
     snapshot_rows: list[dict[str, Any]] = []
 
     if data_table:
         quoted_data_table = quote_mysql_identifier(data_table)
+        quoted_latest_data_table = quote_mysql_identifier(latest_data_table)
+        quoted_latest_timestamp_column = quote_mysql_identifier(LATEST_TIMESTAMP_COLUMN)
         quoted_serial_column = quote_mysql_identifier(MYSQL_SERIAL_COLUMN)
         quoted_timestamp_column = quote_mysql_identifier(MYSQL_TIMESTAMP_COLUMN)
         quoted_channel_column = quote_mysql_identifier(MYSQL_CHANNEL_COLUMN)
@@ -127,51 +145,68 @@ def build_engine_payload(vessel: str, engine_key: str) -> dict[str, Any]:
             with connection.cursor() as cursor:
                 cursor.execute(
                     f"""
-                    SELECT MAX({quoted_timestamp_column}) AS latestTimestamp
-                    FROM {quoted_data_table}
-                    WHERE {quoted_serial_column} = %s
-                    """,
-                    (engine.get("serialNo", ""),),
+                    SELECT MAX({quoted_latest_timestamp_column}) AS latestTimestamp
+                    FROM {quoted_latest_data_table}
+                    """
                 )
                 latest_row = cursor.fetchone() or {}
-                latest_timestamp = latest_row.get("latestTimestamp")
+                latest_data_timestamp = latest_row.get("latestTimestamp")
 
-                if latest_timestamp is not None:
-                    latest_timestamp_ms = int(
-                        latest_timestamp.replace(tzinfo=timezone.utc).timestamp() * 1000
+                if latest_data_timestamp is not None:
+                    latest_data_timestamp_ms = int(
+                        latest_data_timestamp.replace(tzinfo=timezone.utc).timestamp() * 1000
                     )
-                    cache_key = (vessel, engine_key, latest_timestamp_ms)
+                    cache_key = (vessel, engine_key, latest_data_timestamp_ms)
                     cached_payload = ENGINE_PAYLOAD_CACHE.get(cache_key)
 
                     if cached_payload is not None:
                         return cached_payload
 
+                    # Point lookups avoid a full history scan when an engine trails last_ts.
+                    timestamp_candidates = [
+                        latest_data_timestamp - timedelta(seconds=offset)
+                        for offset in range(ENGINE_SNAPSHOT_LOOKBACK_SECONDS + 1)
+                    ]
+                    timestamp_placeholders = ", ".join(
+                        ["%s"] * len(timestamp_candidates)
+                    )
                     cursor.execute(
                         f"""
-                        WITH latest_channel_rows AS (
-                            SELECT
-                                {quoted_channel_column} AS channelDescription,
-                                MAX({quoted_timestamp_column}) AS latestChannelTimestamp
-                            FROM {quoted_data_table}
-                            WHERE {quoted_serial_column} = %s
-                              AND {quoted_timestamp_column} <= %s
-                            GROUP BY {quoted_channel_column}
-                        )
-                        SELECT
-                            records.{quoted_channel_column} AS channelDescription,
-                            records.{quoted_value_column} AS value,
-                            COALESCE(records.{quoted_unit_column}, '') AS unit
-                        FROM {quoted_data_table} AS records
-                        INNER JOIN latest_channel_rows
-                            ON latest_channel_rows.channelDescription = records.{quoted_channel_column}
-                           AND latest_channel_rows.latestChannelTimestamp = records.{quoted_timestamp_column}
-                        WHERE records.{quoted_serial_column} = %s
-                        ORDER BY records.{quoted_channel_column}
+                        SELECT {quoted_timestamp_column} AS snapshotTimestamp
+                        FROM {quoted_data_table}
+                        WHERE {quoted_serial_column} = %s
+                          AND {quoted_timestamp_column} IN ({timestamp_placeholders})
+                        ORDER BY {quoted_timestamp_column} DESC
+                        LIMIT 1
                         """,
                         (
                             engine.get("serialNo", ""),
-                            latest_timestamp,
+                            *timestamp_candidates,
+                        ),
+                    )
+                    snapshot_row = cursor.fetchone() or {}
+                    snapshot_timestamp = snapshot_row.get("snapshotTimestamp")
+
+                    if snapshot_timestamp is not None:
+                        snapshot_timestamp_ms = int(
+                            snapshot_timestamp.replace(tzinfo=timezone.utc).timestamp() * 1000
+                        )
+
+                if snapshot_timestamp is not None:
+                    cursor.execute(
+                        f"""
+                        SELECT
+                            {quoted_channel_column} AS channelDescription,
+                            {quoted_value_column} AS value,
+                            COALESCE({quoted_unit_column}, '') AS unit
+                        FROM {quoted_data_table}
+                        WHERE {quoted_serial_column} = %s
+                          AND {quoted_timestamp_column} = %s
+                        ORDER BY {quoted_channel_column}
+                        """,
+                        (
                             engine.get("serialNo", ""),
+                            snapshot_timestamp,
                         ),
                     )
                     snapshot_rows = cursor.fetchall()
@@ -180,8 +215,10 @@ def build_engine_payload(vessel: str, engine_key: str) -> dict[str, Any]:
         snapshot_rows,
         engine_binding_lookup=engine_binding_lookup,
         engine_label=engine.get("label", engine_key),
-        latest_timestamp=latest_timestamp,
+        latest_timestamp=snapshot_timestamp,
     )
+    for configured_element_id in (vessel_config.get("engine_svg_mapping") or {}):
+        values.setdefault(configured_element_id, "--")
 
     payload = {
         "page": "engine",
@@ -194,15 +231,19 @@ def build_engine_payload(vessel: str, engine_key: str) -> dict[str, Any]:
                 "label": vessel_config.get("label", vessel),
                 "database": vessel_config.get("database", ""),
                 "dataTable": data_table or "",
-                "latestDataTable": vessel_config.get("latest_data_table", ""),
+                "latestDataTable": latest_data_table or "",
             },
             "engine": {
                 "key": engine.get("key", ""),
                 "label": engine.get("label", engine_key),
                 "serialNo": engine.get("serialNo", ""),
             },
-            "latestTimestampMs": latest_timestamp_ms,
-            "latestTimestampLabel": format_engine_timestamp_label(latest_timestamp),
+            "latestTimestampMs": snapshot_timestamp_ms,
+            "latestTimestampLabel": format_engine_timestamp_label(snapshot_timestamp),
+            "latestDataTimestampMs": latest_data_timestamp_ms,
+            "latestDataTimestampLabel": format_engine_timestamp_label(
+                latest_data_timestamp
+            ),
             "matchedElementIds": matched_element_ids,
             "matchedElementCount": len(matched_element_ids),
             "configuredElementCount": len(engine_binding_lookup),
@@ -211,7 +252,15 @@ def build_engine_payload(vessel: str, engine_key: str) -> dict[str, Any]:
         },
     }
 
-    ENGINE_PAYLOAD_CACHE[(vessel, engine_key, latest_timestamp_ms)] = payload
+    stale_cache_keys = [
+        key
+        for key in ENGINE_PAYLOAD_CACHE
+        if key[:2] == (vessel, engine_key) and key[2] != latest_data_timestamp_ms
+    ]
+    for stale_cache_key in stale_cache_keys:
+        del ENGINE_PAYLOAD_CACHE[stale_cache_key]
+
+    ENGINE_PAYLOAD_CACHE[(vessel, engine_key, latest_data_timestamp_ms)] = payload
     return payload
 
 

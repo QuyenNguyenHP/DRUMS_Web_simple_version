@@ -102,8 +102,10 @@ export const fetchOverviewConfig = async () => {
   );
 };
 
-export const fetchVesselConfig = async () => {
-  const response = await fetch("/api/vessels/config");
+export const fetchVesselConfig = async ({ includeLatestRange = true } = {}) => {
+  const url = new URL("/api/vessels/config", window.location.origin);
+  url.searchParams.set("includeLatestRange", String(includeLatestRange));
+  const response = await fetch(url.pathname + url.search);
 
   return readJsonOrThrow(
     response,

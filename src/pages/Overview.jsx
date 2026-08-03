@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import NavigationSidebar from "../components/NavigationSidebar";
 import TimeSeriesLineChart from "../components/TimeSeriesLineChart";
-import VesselEngineSelector from "../components/VesselEngineSelector";
+import VesselEngineSelector, {
+  MultiSelectField,
+} from "../components/VesselEngineSelector";
 import {
   fetchOverviewChannelOptions,
   fetchVesselConfig,
@@ -24,11 +26,8 @@ const SERIES_COLORS = [
 
 const cardClass =
   "rounded-[14px] border border-[#334155] bg-[#111827] p-4";
-const fieldClass =
-  "w-full rounded-[12px] border border-[#334155] bg-[#0b1220] px-3 py-3 text-[14px] text-[#f8fafc] outline-none transition focus:border-[#2563eb]";
 const buttonClass =
   "rounded-[12px] bg-blue-600 px-4 py-2 text-[14px] font-semibold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-70";
-const labelClass = "mb-2 block text-[13px] font-semibold text-[#8fb4ef]";
 
 const pad = (value) => String(value).padStart(2, "0");
 
@@ -85,107 +84,6 @@ const DateField = ({ label, value, onChange }) => (
     />
   </label>
 );
-
-const MultiSelectField = ({
-  label,
-  options,
-  selectedValues,
-  onToggle,
-  isOpen,
-  onOpenChange,
-  getOptionValue,
-  getOptionLabel,
-  getOptionMeta,
-  emptyMessage,
-  placeholder,
-  disabled = false,
-}) => {
-  const containerRef = useRef(null);
-  const selectedLabels = options
-    .filter((option) => selectedValues.includes(getOptionValue(option)))
-    .map((option) => getOptionLabel(option));
-
-  useEffect(() => {
-    if (!isOpen) {
-      return undefined;
-    }
-
-    const handlePointerDown = (event) => {
-      if (!containerRef.current?.contains(event.target)) {
-        onOpenChange(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-    };
-  }, [isOpen, onOpenChange]);
-
-  return (
-    <div ref={containerRef} className="block">
-      <span className={labelClass}>{label}</span>
-      <div className="relative">
-        <button
-          type="button"
-          className={`${fieldClass} flex cursor-pointer items-center justify-between gap-3 ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
-          onClick={() => {
-            if (!disabled) {
-              onOpenChange(!isOpen);
-            }
-          }}
-          aria-expanded={isOpen}
-          disabled={disabled}
-        >
-          <span className="truncate text-left">
-            {selectedLabels.length > 0
-              ? `${selectedLabels.length} item(s) selected`
-              : placeholder}
-          </span>
-          <span className={`text-slate-400 transition ${isOpen ? "rotate-180" : ""}`}>
-            v
-          </span>
-        </button>
-
-        {!disabled && isOpen ? (
-          <div className="absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-[12px] border border-[#334155] bg-[#0b1220] p-2 shadow-[0_16px_40px_rgba(2,6,23,0.45)]">
-            {options.length === 0 ? (
-              <div className="px-3 py-2 text-[13px] text-slate-400">{emptyMessage}</div>
-            ) : (
-              options.map((option) => {
-                const optionValue = getOptionValue(option);
-                const optionMeta = getOptionMeta(option);
-
-                return (
-                  <label
-                    key={optionValue}
-                    className="flex cursor-pointer items-start gap-3 rounded-[10px] px-3 py-2 text-[#f8fafc] transition hover:bg-slate-800"
-                  >
-                    <input
-                      type="checkbox"
-                      className="mt-1 h-4 w-4 rounded border-slate-500 bg-transparent accent-blue-500"
-                      checked={selectedValues.includes(optionValue)}
-                      onChange={() => onToggle(optionValue)}
-                    />
-                    <span className="min-w-0">
-                      <span className="block text-[13px] leading-5">
-                        {getOptionLabel(option)}
-                      </span>
-                      {optionMeta ? (
-                        <span className="block text-[11px] text-slate-400">{optionMeta}</span>
-                      ) : null}
-                    </span>
-                  </label>
-                );
-              })
-            )}
-          </div>
-        ) : null}
-      </div>
-    </div>
-  );
-};
 
 const Overview = () => {
   const initialRange = useMemo(buildInitialUtcRange, []);
@@ -579,7 +477,7 @@ const Overview = () => {
                   </button>
                 </div>
 
-                <div className="grid gap-3 lg:grid-cols-3">
+                <div className="grid gap-3 lg:grid-cols-3 max-w-[1200px]">
                   <VesselEngineSelector
                     vesselOptions={overviewConfig}
                     selectedVessel={selectedVessel}

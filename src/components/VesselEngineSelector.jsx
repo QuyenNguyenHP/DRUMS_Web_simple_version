@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 
 const fieldClass =
-  "w-full rounded-[12px] border border-[#334155] bg-[#0b1220] px-3 py-3 text-[14px] text-[#f8fafc] outline-none transition focus:border-[#2563eb]";
-const labelClass = "mb-2 block text-[13px] font-semibold text-[#8fb4ef]";
+  "w-full rounded-[12px] border border-[#334155] bg-[#0b1220] px-3 py-2 text-[12px] text-[#f8fafc] outline-none transition focus:border-[#2563eb]";
+const labelClass = "mb-2 block text-[12px] font-semibold text-[#8fb4ef]";
 
 const SelectField = ({ label, value, onChange, children, disabled = false }) => (
   <label className="block">
@@ -18,7 +18,7 @@ const SelectField = ({ label, value, onChange, children, disabled = false }) => 
   </label>
 );
 
-const MultiSelectField = ({
+export const MultiSelectField = ({
   label,
   options,
   selectedValues,
@@ -138,7 +138,13 @@ const VesselEngineSelector = ({
   className = "grid gap-3 lg:grid-cols-3",
 }) => {
   const [selectedEngineValue = ""] = selectedEngineValues;
+  const [isVesselOpen, setIsVesselOpen] = useState(false);
   const [isEngineOpen, setIsEngineOpen] = useState(false);
+
+  const handleVesselToggle = (vesselValue) => {
+    onVesselChange(vesselValue);
+    setIsVesselOpen(false);
+  };
 
   const handleEngineToggle = (engineKey) => {
     if (engineSelectionMode === "single-dropdown") {
@@ -156,19 +162,26 @@ const VesselEngineSelector = ({
 
   return (
     <div className={className}>
-      <SelectField
+      <MultiSelectField
         label="Vessel"
-        value={selectedVessel}
-        onChange={(event) => onVesselChange(event.target.value)}
+        options={vesselOptions}
+        selectedValues={selectedVessel ? [selectedVessel] : []}
+        onToggle={handleVesselToggle}
+        isOpen={isVesselOpen}
+        onOpenChange={(nextIsOpen) => {
+          setIsVesselOpen(nextIsOpen);
+          if (nextIsOpen) {
+            setIsEngineOpen(false);
+          }
+        }}
+        getOptionValue={(option) => option.value}
+        getOptionLabel={(option) => option.label}
+        getOptionMeta={() => ""}
+        placeholder="Select vessel"
+        emptyMessage="No vessel configured."
+        selectionMode="single"
         disabled={vesselDisabled}
-      >
-        {vesselOptions.length === 0 ? <option value="">No vessel configured</option> : null}
-        {vesselOptions.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </SelectField>
+      />
 
       {engineSelectionMode === "multiple" || engineSelectionMode === "single-dropdown" ? (
         <MultiSelectField
@@ -177,7 +190,12 @@ const VesselEngineSelector = ({
           selectedValues={selectedEngineValues}
           onToggle={handleEngineToggle}
           isOpen={isEngineOpen}
-          onOpenChange={setIsEngineOpen}
+          onOpenChange={(nextIsOpen) => {
+            setIsEngineOpen(nextIsOpen);
+            if (nextIsOpen) {
+              setIsVesselOpen(false);
+            }
+          }}
           getOptionValue={(option) => option.key}
           getOptionLabel={(option) => option.label}
           getOptionMeta={(option) => option.serialNo}

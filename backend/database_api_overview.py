@@ -292,11 +292,15 @@ def get_vessel_latest_range(vessel_config: dict[str, Any]) -> tuple[int | None, 
     return range_start_ms, range_end_ms
 
 
-def build_vessel_payload() -> dict[str, Any]:
+def build_vessel_payload(*, include_latest_range: bool = True) -> dict[str, Any]:
     vessels = []
 
     for vessel_key, vessel_config in VESSEL_CONFIGS.items():
-        range_start_ms, range_end_ms = get_vessel_latest_range(vessel_config)
+        range_start_ms, range_end_ms = (
+            get_vessel_latest_range(vessel_config)
+            if include_latest_range
+            else (None, None)
+        )
         vessels.append(
             {
                 "value": vessel_key,
@@ -661,7 +665,10 @@ def get_history_trend_route() -> Any:
 def get_vessel_config_route() -> Any:
     request_started = time.perf_counter()
     try:
-        payload = build_vessel_payload()
+        include_latest_range = request.args.get(
+            "includeLatestRange", default="true", type=str
+        ).strip().lower() not in {"0", "false", "no"}
+        payload = build_vessel_payload(include_latest_range=include_latest_range)
         serialize_started = time.perf_counter()
         response = jsonify(payload)
         log_backend_timing(
