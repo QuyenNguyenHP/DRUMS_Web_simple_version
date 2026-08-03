@@ -93,6 +93,7 @@ export const MultiSelectField = ({
               options.map((option) => {
                 const optionValue = getOptionValue(option);
                 const optionMeta = getOptionMeta(option);
+                const isSelected = selectedValues.includes(optionValue);
 
                 return (
                   <label
@@ -101,11 +102,23 @@ export const MultiSelectField = ({
                   >
                     <input
                       type={selectionMode === "single" ? "radio" : "checkbox"}
-                      className="mt-1 h-4 w-4 rounded border-slate-500 bg-transparent accent-blue-500"
-                      checked={selectedValues.includes(optionValue)}
+                      className="sr-only"
+                      checked={isSelected}
                       onChange={() => onToggle(optionValue)}
                       name={selectionMode === "single" ? `${label}-selection` : undefined}
                     />
+                    <span
+                      aria-hidden="true"
+                      className={`mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition ${
+                        isSelected
+                          ? "border-blue-400"
+                          : "border-slate-500 bg-slate-800"
+                      }`}
+                    >
+                      {isSelected ? (
+                        <span className="h-2 w-2 rounded-full bg-blue-400" />
+                      ) : null}
+                    </span>
                     <span className="min-w-0">
                       <span className="block text-[13px] leading-5">
                         {getOptionLabel(option)}
