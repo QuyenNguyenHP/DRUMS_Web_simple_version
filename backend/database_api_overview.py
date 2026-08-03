@@ -12,7 +12,7 @@ from typing import Any
 import pymysql
 from flask import Blueprint, jsonify, request
 
-database_api = Blueprint("database_api", __name__)
+overview_api = Blueprint("overview_api", __name__)
 BASE_DIR = Path(__file__).resolve().parent
 IDENTIFIER_PATTERN = re.compile(r"^[A-Za-z0-9_]+$")
 LOGGER = logging.getLogger(__name__)
@@ -27,6 +27,7 @@ CONFIG = load_json_config("backend_config.json")
 DATABASE_CONNECTION_CONFIG = CONFIG.get("database_connection", {})
 HISTORY_CONFIG = CONFIG.get("history_trend", {})
 OVERVIEW_CONFIG = CONFIG.get("overview_trend", {})
+VESSEL_CONFIGS = CONFIG.get("vessels", {})
 
 
 def resolve_database_path(relative_path: str) -> Path:
@@ -63,7 +64,6 @@ LATEST_TIMESTAMP_COLUMN = OVERVIEW_CONFIG.get("latest_timestamp_column", "last_t
 CHANNEL_FILTER_UNIT_EXCLUDE = str(
     OVERVIEW_CONFIG.get("channel_filter_unit_exclude", "On/Off")
 ).strip()
-VESSEL_CONFIGS = OVERVIEW_CONFIG.get("vessels", {})
 
 
 def quote_sqlite_identifier(identifier: str) -> str:
@@ -292,7 +292,7 @@ def get_vessel_latest_range(vessel_config: dict[str, Any]) -> tuple[int | None, 
     return range_start_ms, range_end_ms
 
 
-def build_overview_vessel_payload() -> dict[str, Any]:
+def build_vessel_payload() -> dict[str, Any]:
     vessels = []
 
     for vessel_key, vessel_config in VESSEL_CONFIGS.items():
@@ -310,12 +310,22 @@ def build_overview_vessel_payload() -> dict[str, Any]:
         )
 
     return {
-        "page": "overview-config",
+        "page": "vessel-config",
         "vessels": vessels,
         "meta": {
             "count": len(vessels),
         },
     }
+
+
+def get_vessel_engine(vessel_config: dict[str, Any], engine_key: str) -> dict[str, Any]:
+    normalized_engine_key = str(engine_key or "").strip()
+
+    for engine in vessel_config.get("engines", []):
+        if str(engine.get("key", "")).strip() == normalized_engine_key:
+            return engine
+
+    raise ValueError("Unsupported engine for the selected vessel.")
 
 
 def create_mysql_connection(database_name: str) -> pymysql.connections.Connection:
@@ -501,10 +511,7 @@ def build_overview_trend_payload(
                 cursor, quoted_data_table, resolved_serials, start_time, end_time
             )
             range_query_ms = duration_ms(range_started)
-            total_range_seconds = max(
-                1,
-                int((range_end - range_start).total_seconds()),
-            )
+            total_range_seconds = max(1, int((range_end - range_start).total_seconds()))
             target_bucket_count = max(1, MAX_OVERVIEW_POINTS_PER_SERIES // 2)
             bucket_seconds = max(
                 1,
@@ -609,7 +616,7 @@ def build_overview_trend_payload(
     }
 
 
-@database_api.get("/api/history/trend")
+@overview_api.get("/api/history/trend")
 def get_history_trend_route() -> Any:
     request_started = time.perf_counter()
     try:
@@ -650,11 +657,44 @@ def get_history_trend_route() -> Any:
         return jsonify({"error": str(exc)}), 500
 
 
-@database_api.get("/api/overview/config")
+@overview_api.get("/api/vessels/config")
+def get_vessel_config_route() -> Any:
+    request_started = time.perf_counter()
+    try:
+        payload = build_vessel_payload()
+        serialize_started = time.perf_counter()
+        response = jsonify(payload)
+        log_backend_timing(
+            "/api/vessels/config",
+            status_code=200,
+            total_start=request_started,
+            serialize_start=serialize_started,
+            vessel_count=payload.get("meta", {}).get("count", 0),
+        )
+        return response
+    except ValueError as exc:
+        log_backend_timing(
+            "/api/vessels/config",
+            status_code=400,
+            total_start=request_started,
+            error=str(exc),
+        )
+        return jsonify({"error": str(exc)}), 400
+    except Exception as exc:
+        log_backend_timing(
+            "/api/vessels/config",
+            status_code=500,
+            total_start=request_started,
+            error=str(exc),
+        )
+        return jsonify({"error": str(exc)}), 500
+
+
+@overview_api.get("/api/overview/config")
 def get_overview_config_route() -> Any:
     request_started = time.perf_counter()
     try:
-        payload = build_overview_vessel_payload()
+        payload = build_vessel_payload()
         serialize_started = time.perf_counter()
         response = jsonify(payload)
         log_backend_timing(
@@ -683,7 +723,7 @@ def get_overview_config_route() -> Any:
         return jsonify({"error": str(exc)}), 500
 
 
-@database_api.get("/api/overview/channel-options")
+@overview_api.get("/api/overview/channel-options")
 def get_overview_channel_options_route() -> Any:
     request_started = time.perf_counter()
     try:
@@ -735,7 +775,7 @@ def get_overview_channel_options_route() -> Any:
         return jsonify({"error": str(exc)}), 500
 
 
-@database_api.get("/api/overview/trend")
+@overview_api.get("/api/overview/trend")
 def get_overview_trend_route() -> Any:
     request_started = time.perf_counter()
     try:

@@ -1,11 +1,11 @@
-const PID_MONITOR_ENDPOINT = "/api/pid";
+const ENGINE_MONITOR_ENDPOINT = "/api/engine";
 
 const readJsonResponse = async (response) => {
   if (response.ok) {
     return response.json();
   }
 
-  let message = `P&ID request failed with status ${response.status}`;
+  let message = `Engine request failed with status ${response.status}`;
 
   try {
     const errorPayload = await response.json();
@@ -18,7 +18,7 @@ const readJsonResponse = async (response) => {
 };
 
 /**
- * Loads the current values used by the P&ID screen.
+ * Loads the current values used by the engine screen.
  *
  * Expected response shape:
  * {
@@ -26,8 +26,18 @@ const readJsonResponse = async (response) => {
  *   meta: { pollIntervalMs: 2000 }
  * }
  */
-export const fetchPidMonitorData = async ({ signal } = {}) => {
-  const response = await fetch(PID_MONITOR_ENDPOINT, {
+export const fetchEngineMonitorData = async ({ vessel, engine, signal } = {}) => {
+  const url = new URL(ENGINE_MONITOR_ENDPOINT, window.location.origin);
+
+  if (vessel) {
+    url.searchParams.set("vessel", vessel);
+  }
+
+  if (engine) {
+    url.searchParams.set("engine", engine);
+  }
+
+  const response = await fetch(url.pathname + url.search, {
     headers: { Accept: "application/json" },
     signal,
   });
@@ -35,4 +45,4 @@ export const fetchPidMonitorData = async ({ signal } = {}) => {
   return readJsonResponse(response);
 };
 
-export { PID_MONITOR_ENDPOINT };
+export { ENGINE_MONITOR_ENDPOINT };

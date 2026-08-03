@@ -377,10 +377,10 @@ Khi dùng dòng này:
 
 ## 15. File quan trọng trong project
 
-- [backend/app.py](/C:/Users/DAIKAI%20VR/Desktop/DRUMS_Web_simple_version/backend/app.py)
-- [backend/backend_config.json](/C:/Users/DAIKAI%20VR/Desktop/DRUMS_Web_simple_version/backend/backend_config.json)
-- [backend/requirements.txt](/C:/Users/DAIKAI%20VR/Desktop/DRUMS_Web_simple_version/backend/requirements.txt)
-- [vite.config.mjs](/C:/Users/DAIKAI%20VR/Desktop/DRUMS_Web_simple_version/vite.config.mjs)
+- [backend/app.py](</C:/Users/DAIKAI%20VR/Desktop/DRUMS_Web_simple_version/backend/app.py>)
+- [backend/backend_config.json](</C:/Users/DAIKAI%20VR/Desktop/DRUMS_Web_simple_version/backend/backend_config.json>)
+- [backend/requirements.txt](</C:/Users/DAIKAI%20VR/Desktop/DRUMS_Web_simple_version/backend/requirements.txt>)
+- [vite.config.mjs](</C:/Users/DAIKAI%20VR/Desktop/DRUMS_Web_simple_version/vite.config.mjs>)
 
 Nếu bạn muốn, bước tiếp theo mình có thể tạo luôn:
 

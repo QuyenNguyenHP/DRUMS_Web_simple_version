@@ -102,6 +102,15 @@ export const fetchOverviewConfig = async () => {
   );
 };
 
+export const fetchVesselConfig = async () => {
+  const response = await fetch("/api/vessels/config");
+
+  return readJsonOrThrow(
+    response,
+    `vessel config request failed with status ${response.status}`
+  );
+};
+
 export const fetchOverviewTrend = async ({
   vessel,
   serialNumbers,

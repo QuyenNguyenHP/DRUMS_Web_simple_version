@@ -4,9 +4,10 @@ import Footer from "../components/Footer";
 import Header from "../components/Header";
 import NavigationSidebar from "../components/NavigationSidebar";
 import TimeSeriesLineChart from "../components/TimeSeriesLineChart";
+import VesselEngineSelector from "../components/VesselEngineSelector";
 import {
   fetchOverviewChannelOptions,
-  fetchOverviewConfig,
+  fetchVesselConfig,
   fetchOverviewTrend,
 } from "../services/apiClient";
 
@@ -82,20 +83,6 @@ const DateField = ({ label, value, onChange }) => (
       value={value}
       onChange={onChange}
     />
-  </label>
-);
-
-const SelectField = ({ label, value, onChange, children, disabled = false }) => (
-  <label className="block">
-    <span className={labelClass}>{label}</span>
-    <select
-      className={fieldClass}
-      value={value}
-      onChange={onChange}
-      disabled={disabled}
-    >
-      {children}
-    </select>
   </label>
 );
 
@@ -216,7 +203,6 @@ const Overview = () => {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [draftStartInput, setDraftStartInput] = useState(initialRange.draftStartInput);
   const [draftEndInput, setDraftEndInput] = useState(initialRange.draftEndInput);
-  const [isEngineOpen, setIsEngineOpen] = useState(false);
   const [isChartDataOpen, setIsChartDataOpen] = useState(false);
 
   const selectedVesselOption =
@@ -237,7 +223,7 @@ const Overview = () => {
     setIsConfigLoading(true);
     setError("");
 
-    fetchOverviewConfig()
+    fetchVesselConfig()
       .then((payload) => {
         if (!isActive) {
           return;
@@ -298,7 +284,6 @@ const Overview = () => {
     if (!selectedVessel || selectedSerialNumbers.length === 0) {
       setChannelOptions([]);
       setSelectedChannels([]);
-      setIsEngineOpen(false);
       setIsChartDataOpen(false);
       return;
     }
@@ -467,14 +452,6 @@ const Overview = () => {
     );
   };
 
-  const handleEngineToggle = (engineKey) => {
-    setSelectedEngines((currentValues) =>
-      currentValues.includes(engineKey)
-        ? currentValues.filter((value) => value !== engineKey)
-        : [...currentValues, engineKey]
-    );
-  };
-
   const applyFiltersForRange = (startInput, endInput) => {
     const startMs = fromUtcInputValue(startInput);
     const endMs = fromUtcInputValue(endInput);
@@ -505,7 +482,6 @@ const Overview = () => {
     }
 
     setError("");
-    setIsEngineOpen(false);
     setIsChartDataOpen(false);
     setSubmittedFilters({
       vessel: selectedVessel,
@@ -604,42 +580,24 @@ const Overview = () => {
                 </div>
 
                 <div className="grid gap-3 lg:grid-cols-3">
-                  <SelectField
-                    label="Vessel"
-                    value={selectedVessel}
-                    onChange={(event) => {
+                  <VesselEngineSelector
+                    vesselOptions={overviewConfig}
+                    selectedVessel={selectedVessel}
+                    onVesselChange={(nextVesselValue) => {
                       const nextVessel =
-                        overviewConfig.find((option) => option.value === event.target.value) ??
-                        null;
-                      setSelectedVessel(event.target.value);
-                      setSelectedEngines(nextVessel?.engines?.[0]?.key ? [nextVessel.engines[0].key] : []);
+                        overviewConfig.find((option) => option.value === nextVesselValue) ?? null;
+                      setSelectedVessel(nextVesselValue);
+                      setSelectedEngines(
+                        nextVessel?.engines?.[0]?.key ? [nextVessel.engines[0].key] : []
+                      );
                       resetDraftRange(nextVessel);
                     }}
-                    disabled={isConfigLoading}
-                  >
-                    {overviewConfig.length === 0 ? (
-                      <option value="">No vessel configured</option>
-                    ) : null}
-                    {overviewConfig.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </SelectField>
-
-                  <MultiSelectField
-                    label="Engine"
-                    options={engineOptions}
-                    selectedValues={selectedEngines}
-                    onToggle={handleEngineToggle}
-                    isOpen={isEngineOpen}
-                    onOpenChange={setIsEngineOpen}
-                    getOptionValue={(option) => option.key}
-                    getOptionLabel={(option) => option.label}
-                    getOptionMeta={(option) => option.serialNo}
-                    placeholder="Select engine"
-                    emptyMessage="No engine configured."
-                    disabled={isConfigLoading || engineOptions.length === 0}
+                    engineOptions={engineOptions}
+                    selectedEngineValues={selectedEngines}
+                    onEngineSelectionChange={setSelectedEngines}
+                    vesselDisabled={isConfigLoading}
+                    engineDisabled={isConfigLoading || engineOptions.length === 0}
+                    className="grid gap-3 lg:col-span-2 lg:grid-cols-2"
                   />
 
                   <MultiSelectField
