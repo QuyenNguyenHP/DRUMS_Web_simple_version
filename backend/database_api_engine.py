@@ -121,6 +121,7 @@ def build_engine_payload(vessel: str, engine_key: str) -> dict[str, Any]:
 
     data_table = vessel_config.get("data_table")
     latest_data_table = vessel_config.get("latest_data_table")
+    ship_name = str(vessel_config.get("ship_name", "")).strip()
 
     if not latest_data_table:
         raise ValueError(f"Vessel {vessel} is missing latest_data_table configuration.")
@@ -143,12 +144,17 @@ def build_engine_payload(vessel: str, engine_key: str) -> dict[str, Any]:
 
         with create_mysql_connection(vessel_config["database"]) as connection:
             with connection.cursor() as cursor:
-                cursor.execute(
-                    f"""
+                latest_timestamp_query = f"""
                     SELECT MAX({quoted_latest_timestamp_column}) AS latestTimestamp
                     FROM {quoted_latest_data_table}
-                    """
-                )
+                """
+                latest_timestamp_params: tuple[str, ...] = ()
+
+                if ship_name:
+                    latest_timestamp_query += "\n                    WHERE `ShipName` = %s"
+                    latest_timestamp_params = (ship_name,)
+
+                cursor.execute(latest_timestamp_query, latest_timestamp_params)
                 latest_row = cursor.fetchone() or {}
                 latest_data_timestamp = latest_row.get("latestTimestamp")
 

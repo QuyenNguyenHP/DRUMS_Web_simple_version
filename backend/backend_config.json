@@ -22,6 +22,7 @@
   "vessels": {
     "H429": {
       "label": "H429",
+      "ship_name": "Shanaya",
       "database": "jemla",
       "channel_table": "jemla_channel",
       "latest_data_table": "jemla_increment",
@@ -77,6 +78,7 @@
     },
     "DB45-01": {
       "label": "DB45-01",
+      "ship_name": "Truong Minh Dream 05",
       "database": "truongminh",
       "channel_table": "truongminh_channel",
       "latest_data_table": "truongminh_increment",
@@ -122,6 +124,7 @@
     },
     "Dubai Sky": {
       "label": "Dubai Sky",
+      "ship_name": "Dubai Sky",
       "database": "emarat_v2",
       "channel_table": "dubai_sky_channel",
       "latest_data_table": "dubai_increment",
