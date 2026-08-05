@@ -13,6 +13,8 @@ const ENGINE_CANVAS_HEIGHT = 917;
 const ENGINE_DISPLAY_SCALE = 0.8;
 const ENGINE_DISPLAY_WIDTH = ENGINE_CANVAS_WIDTH * ENGINE_DISPLAY_SCALE;
 const ENGINE_ASPECT_RATIO = `${ENGINE_CANVAS_WIDTH} / ${ENGINE_CANVAS_HEIGHT}`;
+const ENGINE_ASPECT_RATIO_VALUE = ENGINE_CANVAS_WIDTH / ENGINE_CANVAS_HEIGHT;
+const ENGINE_VIEWPORT_OFFSET_PX = 240;
 
 // Put the SVG file in /public, then set its URL here.
 const SVG_SOURCE = "/Engine_indicator.svg";
@@ -271,8 +273,9 @@ const Engine = () => {
                 <div
                   className="relative mx-auto w-full overflow-hidden"
                   style={{
-                    maxWidth: ENGINE_DISPLAY_WIDTH,
+                    width: `min(100%, ${ENGINE_DISPLAY_WIDTH}px, calc((100dvh - ${ENGINE_VIEWPORT_OFFSET_PX}px) * ${ENGINE_ASPECT_RATIO_VALUE}))`,
                     aspectRatio: ENGINE_ASPECT_RATIO,
+                    maxHeight: `calc(100dvh - ${ENGINE_VIEWPORT_OFFSET_PX}px)`,
                   }}
                 >
                   <img
