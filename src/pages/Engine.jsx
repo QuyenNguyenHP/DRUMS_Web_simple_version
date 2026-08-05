@@ -14,7 +14,7 @@ const ENGINE_DISPLAY_SCALE = 0.8;
 const ENGINE_DISPLAY_WIDTH = ENGINE_CANVAS_WIDTH * ENGINE_DISPLAY_SCALE;
 const ENGINE_ASPECT_RATIO = `${ENGINE_CANVAS_WIDTH} / ${ENGINE_CANVAS_HEIGHT}`;
 const ENGINE_ASPECT_RATIO_VALUE = ENGINE_CANVAS_WIDTH / ENGINE_CANVAS_HEIGHT;
-const ENGINE_VIEWPORT_OFFSET_PX = 240;
+const ENGINE_VIEWPORT_OFFSET_PX = 120;
 
 // Put the SVG file in /public, then set its URL here.
 const SVG_SOURCE = "/Engine_indicator.svg";
@@ -216,9 +216,9 @@ const Engine = () => {
 
         <section className="flex-1 min-w-0 p-3 lg:p-5">
           <div
-            className="relative flex h-full min-h-[420px] flex-col items-center justify-center overflow-auto rounded-lg border border-slate-700 bg-slate-800/90 lg:min-h-[calc(100vh-116px)]"
+            className="relative flex h-full min-h-[420px] flex-col items-center justify-start overflow-auto rounded-lg border border-slate-700 bg-slate-800/90 px-3 py-4 lg:min-h-[calc(100vh-116px)] lg:justify-center lg:px-0 lg:py-0"
           >
-            <div className="absolute left-4 right-4 top-4 z-20 max-w-[500px]">
+            <div className="z-20 w-full max-w-[500px] lg:absolute lg:left-4 lg:right-4 lg:top-4">
               <VesselEngineSelector
                 vesselOptions={vesselOptions}
                 selectedVessel={selectedVessel}
@@ -236,7 +236,7 @@ const Engine = () => {
                 engineDisabled={engineOptions.length === 0}
                 className="grid gap-3 md:grid-cols-2"
               />
-              <div className="mt-2 inline-flex flex-wrap items-center gap-3 rounded-[12px] border border-slate-700/80 bg-slate-950/65 px-3 py-2 text-[12px] text-slate-300 backdrop-blur-sm">
+              <div className="mt-2 flex flex-wrap items-center gap-3 rounded-[12px] border border-slate-700/80 bg-slate-950/65 px-3 py-2 text-[12px] text-slate-300 backdrop-blur-sm">
                 <span>
                   Vessel: <strong className="text-slate-100">{selectedVesselSummary}</strong>
                 </span>
@@ -269,7 +269,7 @@ const Engine = () => {
             </div>
 
             {svgMarkup ? (
-              <div className="relative w-full shrink-0 overflow-hidden px-2 sm:px-4">
+              <div className="relative mt-4 w-full shrink-0 overflow-hidden px-0 sm:px-2 lg:mt-0 lg:px-4">
                 <div
                   className="relative mx-auto w-full overflow-hidden"
                   style={{
