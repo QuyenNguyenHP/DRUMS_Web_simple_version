@@ -12,7 +12,7 @@ const ENGINE_CANVAS_WIDTH = 1630;
 const ENGINE_CANVAS_HEIGHT = 917;
 const ENGINE_DISPLAY_SCALE = 0.8;
 const ENGINE_DISPLAY_WIDTH = ENGINE_CANVAS_WIDTH * ENGINE_DISPLAY_SCALE;
-const ENGINE_DISPLAY_HEIGHT = ENGINE_CANVAS_HEIGHT * ENGINE_DISPLAY_SCALE;
+const ENGINE_ASPECT_RATIO = `${ENGINE_CANVAS_WIDTH} / ${ENGINE_CANVAS_HEIGHT}`;
 
 // Put the SVG file in /public, then set its URL here.
 const SVG_SOURCE = "/Engine_indicator.svg";
@@ -267,34 +267,36 @@ const Engine = () => {
             </div>
 
             {svgMarkup ? (
-              <div
-                className="relative shrink-0 overflow-hidden"
-                style={{
-                  width: ENGINE_DISPLAY_WIDTH,
-                  height: ENGINE_DISPLAY_HEIGHT,
-                }}
-              >
-                <img
-                  src="/Engine_back_ground.png"
-                  alt=""
-                  aria-hidden="true"
-                  draggable="false"
-                  className="pointer-events-none absolute inset-0 block h-full w-full select-none"
-                />
+              <div className="relative w-full shrink-0 overflow-hidden px-2 sm:px-4">
                 <div
-                  role="img"
-                  aria-label="Engine monitoring diagram"
-                  className="absolute inset-0 [&>svg]:block [&>svg]:h-full [&>svg]:w-full"
-                  dangerouslySetInnerHTML={{ __html: renderedSvgMarkup }}
-                />
-                {isDataLoading ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-slate-950/28 backdrop-blur-[1px]">
-                    <div className="flex items-center gap-3 rounded-full border border-slate-600/80 bg-slate-950/80 px-4 py-2 text-sm text-slate-100 shadow-lg">
-                      <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-500 border-t-cyan-300" />
-                      Loading engine data...
+                  className="relative mx-auto w-full overflow-hidden"
+                  style={{
+                    maxWidth: ENGINE_DISPLAY_WIDTH,
+                    aspectRatio: ENGINE_ASPECT_RATIO,
+                  }}
+                >
+                  <img
+                    src="/Engine_back_ground.png"
+                    alt=""
+                    aria-hidden="true"
+                    draggable="false"
+                    className="pointer-events-none absolute inset-0 block h-full w-full select-none"
+                  />
+                  <div
+                    role="img"
+                    aria-label="Engine monitoring diagram"
+                    className="absolute inset-0 [&>svg]:block [&>svg]:h-full [&>svg]:w-full"
+                    dangerouslySetInnerHTML={{ __html: renderedSvgMarkup }}
+                  />
+                  {isDataLoading ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-slate-950/28 backdrop-blur-[1px]">
+                      <div className="flex items-center gap-3 rounded-full border border-slate-600/80 bg-slate-950/80 px-4 py-2 text-sm text-slate-100 shadow-lg">
+                        <span className="h-5 w-5 animate-spin rounded-full border-2 border-slate-500 border-t-cyan-300" />
+                        Loading engine data...
+                      </div>
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
+                </div>
               </div>
             ) : (
               <div className="max-w-lg px-6 text-center">
