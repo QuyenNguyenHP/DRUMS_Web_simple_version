@@ -1,5 +1,22 @@
 # DRUMS Web Simple Version
 
+## Chạy frontend local
+
+Project yêu cầu Node.js 20 trở lên. Nếu dùng `nvm`:
+
+```bash
+nvm install
+nvm use
+npm ci
+npm run dev
+```
+
+Frontend mặc định chạy tại `http://localhost:5173`. Có thể dùng `npm start`
+thay cho `npm run dev`; cả hai đều khởi động Vite development server.
+
+Backend API cần chạy riêng tại `http://127.0.0.1:8001`; Vite sẽ proxy các request
+`/api/*` sang địa chỉ này.
+
 README này hướng dẫn deploy project lên VPS Ubuntu với:
 
 - Frontend React/Vite build ra thư mục `dist`
@@ -213,19 +230,19 @@ sudo a2enmod headers
 Tạo file:
 
 ```bash
-sudo nano /etc/apache2/sites-available/drums.dqcloud.online.conf
+sudo nano /etc/apache2/sites-available/drums.dqtech.cloud.conf
 ```
 
 Nội dung:
 
 ```apache
 <VirtualHost *:80>
-    ServerName drums.dqcloud.online
-    ServerAdmin admin@dqcloud.online
+    ServerName drums.dqtech.cloud
+    ServerAdmin admin@drums.dqtech.cloud
 
-    DocumentRoot /var/www/drums-web/dist
+    DocumentRoot /home/dq/DRUMS_Web_simple_version/dist
 
-    <Directory /var/www/drums-web/dist>
+    <Directory /home/dq/DRUMS_Web_simple_version/dist>
         Options Indexes FollowSymLinks
         AllowOverride None
         Require all granted
@@ -258,7 +275,7 @@ Giải thích nhanh:
 Enable site:
 
 ```bash
-sudo a2ensite drums.dqcloud.online.conf
+sudo a2ensite drums.dqtech.cloud.conf
 sudo apache2ctl configtest
 sudo systemctl reload apache2
 ```
@@ -275,7 +292,7 @@ sudo systemctl reload apache2
 Sau khi domain đã trỏ đúng IP và Apache site đã hoạt động:
 
 ```bash
-sudo certbot --apache -d drums.dqcloud.online
+sudo certbot --apache -d drums.dqtech.cloud
 ```
 
 Chọn option tự redirect HTTP sang HTTPS khi được hỏi.
