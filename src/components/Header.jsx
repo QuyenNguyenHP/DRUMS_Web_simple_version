@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
 
-const Header = ({ className = "" }) => {
+const Header = ({ className = "", user = null, onLogout }) => {
   const [currentTime, setCurrentTime] = useState("");
   const navigate = useNavigate();
+  const userInitial = user?.username?.[0]?.toUpperCase() ?? "U";
 
   useEffect(() => {
     const formatter = new Intl.DateTimeFormat("en-GB", {
@@ -54,7 +55,28 @@ const Header = ({ className = "" }) => {
           </div>
         </div>
 
-        <div className="h-7 w-7 rounded-full border border-slate-500 bg-slate-600" />
+        {user ? (
+          <div className="hidden rounded-xl border border-slate-600 bg-slate-700/70 px-3 py-2 text-right md:block">
+            <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
+              {user.role}
+            </div>
+            <div className="text-sm font-semibold text-slate-100">{user.username}</div>
+          </div>
+        ) : null}
+
+        {onLogout ? (
+          <button
+            type="button"
+            onClick={onLogout}
+            className="rounded-xl border border-slate-600 bg-slate-700/70 px-3 py-2 text-sm font-semibold text-slate-100 transition hover:border-sky-400 hover:text-sky-200"
+          >
+            Logout
+          </button>
+        ) : null}
+
+        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-500 bg-slate-600 text-sm font-bold text-slate-100">
+          {userInitial}
+        </div>
       </div>
     </header>
   );
@@ -62,6 +84,11 @@ const Header = ({ className = "" }) => {
 
 Header.propTypes = {
   className: PropTypes.string,
+  user: PropTypes.shape({
+    username: PropTypes.string,
+    role: PropTypes.string,
+  }),
+  onLogout: PropTypes.func,
 };
 
 export default Header;

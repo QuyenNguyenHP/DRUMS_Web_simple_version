@@ -3,13 +3,16 @@ from __future__ import annotations
 from flask import Flask
 from flask_cors import CORS
 
+from auth_api import auth_api
 from database_api_engine import engine_api
 from database_api_overview import overview_api
 
 
 app = Flask(__name__)
-CORS(app)
+app.config["SECRET_KEY"] = "drums-local-auth-secret"
+CORS(app, allow_headers=["Content-Type", "Authorization"])
 
+app.register_blueprint(auth_api)
 app.register_blueprint(overview_api)
 app.register_blueprint(engine_api)
 

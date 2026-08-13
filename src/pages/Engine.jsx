@@ -50,7 +50,7 @@ const renderSvgValues = (markup, payload) => {
   return new XMLSerializer().serializeToString(document.documentElement);
 };
 
-const Engine = () => {
+const Engine = ({ user, onLogout }) => {
   const [svgMarkup, setSvgMarkup] = useState("");
   const [svgError, setSvgError] = useState("");
   const [payload, setPayload] = useState(null);
@@ -209,10 +209,10 @@ const Engine = () => {
 
   return (
     <div className="flex min-h-screen w-full flex-col overflow-hidden bg-[#07111f]">
-      <Header />
+      <Header user={user} onLogout={onLogout} />
 
       <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <NavigationSidebar className="w-full min-w-0 lg:w-56 lg:min-w-56" />
+        <NavigationSidebar className="w-full min-w-0 lg:w-56 lg:min-w-56" user={user} />
 
         <section className="flex-1 min-w-0 p-3 lg:p-5">
           <div

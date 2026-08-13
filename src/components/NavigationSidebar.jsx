@@ -7,7 +7,12 @@ const NAV_ITEMS = [
   { to: "/pressure_trend", label: "Pending 2", icon: "/overview.svg" },
 ];
 
-const NavigationSidebar = ({ className = "" }) => {
+const NavigationSidebar = ({ className = "", user = null }) => {
+  const navItems =
+    user?.role === "admin"
+      ? [...NAV_ITEMS, { to: "/admin", label: "Admin", icon: "/overview.svg" }]
+      : NAV_ITEMS;
+
   return (
     <aside
       className={`flex flex-col border-r border-slate-700 bg-slate-800 text-slate-400 ${className}`}
@@ -19,7 +24,7 @@ const NavigationSidebar = ({ className = "" }) => {
       </div>
 
       <div className="flex-1 py-2">
-        {NAV_ITEMS.map((item) => (
+        {navItems.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.to === "/"}>
             {({ isActive }) => (
               <div
@@ -74,6 +79,10 @@ const NavigationSidebar = ({ className = "" }) => {
 
 NavigationSidebar.propTypes = {
   className: PropTypes.string,
+  user: PropTypes.shape({
+    username: PropTypes.string,
+    role: PropTypes.string,
+  }),
 };
 
 export default NavigationSidebar;
