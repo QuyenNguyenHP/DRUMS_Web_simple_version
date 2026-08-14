@@ -4,5 +4,23 @@
     "passwordHash": "scrypt:32768:8:1$2xnlgXRR1gNA4laa$02c86539b3daa0f4ea2d134e30382600a31aad87fe09d6d3199d0e2082acbf7775acd8c0fb5e4513b1f15799fc649b10b6618fa0a038d02c862fca4af554267c",
     "role": "admin",
     "createdAt": "2026-08-14T00:00:00+00:00"
+  },
+  {
+    "username": "drums1",
+    "passwordHash": "scrypt:32768:8:1$IiyQL1YIz9Kf2nlM$33deee9edf4d11c167d796b59dbdee494155b29be507a400caf7e850eb4ced8758846307a27dd1a5b56bea6cfa7dac6594f50fe5dd2c7770691aaf91615d7472",
+    "role": "user",
+    "createdAt": "2026-08-14T13:08:51.144789+00:00"
+  },
+  {
+    "username": "duyquyen131",
+    "passwordHash": "scrypt:32768:8:1$5io3Y58XUlv7s90Q$54e67c962fa6c522a112c2d49a4494620a76d71af55b6cef512ff0a8f4533814dd890455d41a7f5cfd7e3aea8e9e8482352c2dd1172f620da852f3a97edcdf53",
+    "role": "user",
+    "createdAt": "2026-08-14T13:09:05.870266+00:00"
+  },
+  {
+    "username": "drums",
+    "passwordHash": "scrypt:32768:8:1$r8SdKKFc0hOkzEUt$226650b9410c3bb8f00839624458974eed60e679d3fa72400f466da711fa257affdeffd7ae4d4c74d8640a2af93d6df982c0c2a1d30916d2fadeee8c9df61bc1",
+    "role": "admin",
+    "createdAt": "2026-08-14T13:09:34.834660+00:00"
   }
 ]

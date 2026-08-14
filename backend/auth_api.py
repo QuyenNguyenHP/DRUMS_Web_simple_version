@@ -5,7 +5,7 @@ from functools import wraps
 from flask import Blueprint, current_app, jsonify, request
 from itsdangerous import BadSignature, URLSafeSerializer
 
-from auth_store import authenticate_user, create_user, list_users
+from auth_store import authenticate_user, create_user, delete_user, list_users
 
 
 auth_api = Blueprint("auth_api", __name__)
@@ -102,3 +102,19 @@ def users_create():
         return jsonify({"error": str(create_error)}), 400
 
     return jsonify({"user": created_user}), 201
+
+
+@auth_api.delete("/api/users/<string:username>")
+@require_admin
+def users_delete(username: str):
+    try:
+        deleted_user = delete_user(
+            username,
+            request.authenticated_user["username"],
+        )
+    except ValueError as delete_error:
+        error_message = str(delete_error)
+        status_code = 404 if error_message == "User not found." else 400
+        return jsonify({"error": error_message}), status_code
+
+    return jsonify({"user": deleted_user})

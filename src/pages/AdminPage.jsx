@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import NavigationSidebar from "../components/NavigationSidebar";
-import { createUser, fetchUsers } from "../services/authApi";
+import { createUser, deleteUser, fetchUsers } from "../services/authApi";
 
 const inputClassName =
   "w-full rounded-[12px] border border-slate-600 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 outline-none transition focus:border-sky-400";
@@ -14,6 +14,7 @@ export default function AdminPage({ authToken, user, onLogout }) {
   const [users, setUsers] = useState([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingUsername, setDeletingUsername] = useState("");
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [lastUpdated, setLastUpdated] = useState(null);
@@ -68,6 +69,30 @@ export default function AdminPage({ authToken, user, onLogout }) {
       setError(saveError instanceof Error ? saveError.message : "Failed to create user.");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (listedUser) => {
+    const confirmed = window.confirm(
+      `Delete user ${listedUser.username}? This action cannot be undone.`,
+    );
+    if (!confirmed) return;
+
+    setDeletingUsername(listedUser.username);
+    setError("");
+    setSuccessMessage("");
+
+    try {
+      await deleteUser(authToken, listedUser.username);
+      setUsers((currentUsers) =>
+        currentUsers.filter((currentUser) => currentUser.username !== listedUser.username),
+      );
+      setSuccessMessage(`User ${listedUser.username} deleted successfully.`);
+      setLastUpdated(new Date());
+    } catch (deleteError) {
+      setError(deleteError instanceof Error ? deleteError.message : "Failed to delete user.");
+    } finally {
+      setDeletingUsername("");
     }
   };
 
@@ -189,18 +214,19 @@ export default function AdminPage({ authToken, user, onLogout }) {
                         <th className="px-4 py-3">Username</th>
                         <th className="px-4 py-3">Role</th>
                         <th className="px-4 py-3">Created</th>
+                        <th className="px-4 py-3 text-right">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800 bg-slate-900/50">
                       {isLoadingUsers ? (
                         <tr>
-                          <td className="px-4 py-4 text-slate-400" colSpan={3}>
+                          <td className="px-4 py-4 text-slate-400" colSpan={4}>
                             Loading users...
                           </td>
                         </tr>
                       ) : users.length === 0 ? (
                         <tr>
-                          <td className="px-4 py-4 text-slate-400" colSpan={3}>
+                          <td className="px-4 py-4 text-slate-400" colSpan={4}>
                             No users found.
                           </td>
                         </tr>
@@ -219,6 +245,24 @@ export default function AdminPage({ authToken, user, onLogout }) {
                               {listedUser.createdAt
                                 ? new Date(listedUser.createdAt).toLocaleString()
                                 : "--"}
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <button
+                                type="button"
+                                className="rounded-[10px] border border-rose-500/50 px-3 py-1.5 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-50"
+                                onClick={() => handleDelete(listedUser)}
+                                disabled={
+                                  deletingUsername === listedUser.username ||
+                                  listedUser.username.toLowerCase() === user.username.toLowerCase()
+                                }
+                                title={
+                                  listedUser.username.toLowerCase() === user.username.toLowerCase()
+                                    ? "You cannot delete the account you are signed in with"
+                                    : `Delete ${listedUser.username}`
+                                }
+                              >
+                                {deletingUsername === listedUser.username ? "Deleting..." : "Delete"}
+                              </button>
                             </td>
                           </tr>
                         ))

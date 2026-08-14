@@ -86,3 +86,9 @@ export const createUser = async (token, payload) => {
     body: JSON.stringify(payload),
   });
 };
+
+export const deleteUser = async (token, username) => {
+  return authorizedFetch(`/api/users/${encodeURIComponent(username)}`, token, {
+    method: "DELETE",
+  });
+};

@@ -81,7 +81,7 @@ function App() {
   }, [location.pathname]);
 
   if (!session) {
-    return <LoginPage onLogin={handleLogin} setupRequired />;
+    return <LoginPage onLogin={handleLogin} />;
   }
 
   return (

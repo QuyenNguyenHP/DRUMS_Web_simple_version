@@ -146,3 +146,30 @@ def create_user(username: str, password: str, role: str) -> dict[str, str]:
     users.append(new_user)
     _write_users(users)
     return serialize_user(new_user)
+
+
+def delete_user(username: str, authenticated_username: str) -> dict[str, str]:
+    normalized_username = username.strip().lower()
+    normalized_authenticated_username = authenticated_username.strip().lower()
+    users = load_users()
+    user_to_delete = next(
+        (user for user in users if user["username"].lower() == normalized_username),
+        None,
+    )
+
+    if not user_to_delete:
+        raise ValueError("User not found.")
+
+    if normalized_username == normalized_authenticated_username:
+        raise ValueError("You cannot delete the account you are currently signed in with.")
+
+    if user_to_delete["role"] == "admin":
+        admin_count = sum(user["role"] == "admin" for user in users)
+        if admin_count <= 1:
+            raise ValueError("The last administrator account cannot be deleted.")
+
+    remaining_users = [
+        user for user in users if user["username"].lower() != normalized_username
+    ]
+    _write_users(remaining_users)
+    return serialize_user(user_to_delete)
