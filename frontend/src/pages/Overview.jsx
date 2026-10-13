@@ -50,7 +50,7 @@ const renderSvgValues = (markup, payload) => {
   return new XMLSerializer().serializeToString(document.documentElement);
 };
 
-const Engine = ({ user, onLogout }) => {
+const Overview = ({ user, onLogout }) => {
   const [svgMarkup, setSvgMarkup] = useState("");
   const [svgError, setSvgError] = useState("");
   const [payload, setPayload] = useState(null);
@@ -218,25 +218,26 @@ const Engine = ({ user, onLogout }) => {
           <div
             className="relative flex h-full min-h-[420px] flex-col items-center justify-start overflow-auto rounded-lg border border-slate-700 bg-slate-800/90 px-3 py-4 lg:min-h-[calc(100vh-116px)] lg:justify-center lg:px-0 lg:py-0"
           >
-            <div className="z-20 w-full max-w-[500px] lg:absolute lg:left-4 lg:right-4 lg:top-4">
-              <VesselEngineSelector
-                vesselOptions={vesselOptions}
-                selectedVessel={selectedVessel}
-                onVesselChange={(nextVesselValue) => {
-                  const nextVessel =
-                    vesselOptions.find((option) => option.value === nextVesselValue) ?? null;
-                  setSelectedVessel(nextVesselValue);
-                  setSelectedEngine(nextVessel?.engines?.[0]?.key ?? "");
-                }}
-                engineOptions={engineOptions}
-                selectedEngineValues={selectedEngine ? [selectedEngine] : []}
-                onEngineSelectionChange={(nextValues) => setSelectedEngine(nextValues[0] ?? "")}
-                engineSelectionMode="single-dropdown"
-                vesselDisabled={vesselOptions.length === 0}
-                engineDisabled={engineOptions.length === 0}
-                className="grid gap-3 md:grid-cols-2"
-              />
-              <div className="mt-2 flex flex-wrap items-center gap-3 rounded-[12px] border border-slate-700/80 bg-slate-950/65 px-3 py-2 text-[12px] text-slate-300 backdrop-blur-sm">
+            <div className="z-20 w-full lg:absolute lg:left-4 lg:right-4 lg:top-4 lg:w-auto">
+              <div className="grid items-end justify-start gap-3 lg:grid-cols-[minmax(420px,500px)_500px]">
+                <VesselEngineSelector
+                  vesselOptions={vesselOptions}
+                  selectedVessel={selectedVessel}
+                  onVesselChange={(nextVesselValue) => {
+                    const nextVessel =
+                      vesselOptions.find((option) => option.value === nextVesselValue) ?? null;
+                    setSelectedVessel(nextVesselValue);
+                    setSelectedEngine(nextVessel?.engines?.[0]?.key ?? "");
+                  }}
+                  engineOptions={engineOptions}
+                  selectedEngineValues={selectedEngine ? [selectedEngine] : []}
+                  onEngineSelectionChange={(nextValues) => setSelectedEngine(nextValues[0] ?? "")}
+                  engineSelectionMode="single-dropdown"
+                  vesselDisabled={vesselOptions.length === 0}
+                  engineDisabled={engineOptions.length === 0}
+                  className="grid gap-3 sm:grid-cols-2"
+                />
+                <div className="flex min-h-9 flex-wrap items-center gap-x-3 gap-y-1 rounded-[8px] border border-slate-700/80 bg-slate-950/65 px-3 py-2 text-[12px] text-slate-300 backdrop-blur-sm">
                 <span>
                   Vessel: <strong className="text-slate-100">{selectedVesselSummary}</strong>
                 </span>
@@ -254,6 +255,7 @@ const Engine = ({ user, onLogout }) => {
                     </strong>
                   </span>
                 ) : null}
+                </div>
               </div>
               {vesselError ? (
                 <div className="mt-2 rounded-[12px] border border-[#7f1d1d] bg-[#450a0a66] px-3 py-2 text-[12px] text-[#fecaca]">
@@ -320,4 +322,4 @@ const Engine = ({ user, onLogout }) => {
   );
 };
 
-export default Engine;
+export default Overview;

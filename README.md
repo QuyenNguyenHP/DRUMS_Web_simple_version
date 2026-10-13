@@ -1,10 +1,19 @@
 # DRUMS Web Simple Version
 
+## Project structure
+
+```text
+frontend/   React/Vite app, assets, configuration, and Reference/ examples
+backend/    Flask API and database files
+README.md   Local setup and deployment instructions
+```
+
 ## Chạy frontend local
 
 Project yêu cầu Node.js 20 trở lên. Nếu dùng `nvm`:
 
 ```bash
+cd frontend
 nvm install
 nvm use
 npm ci
@@ -19,7 +28,7 @@ Backend API cần chạy riêng tại `http://127.0.0.1:8001`; Vite sẽ proxy c
 
 README này hướng dẫn deploy project lên VPS Ubuntu với:
 
-- Frontend React/Vite build ra thư mục `dist`
+- Frontend React/Vite build ra thư mục `frontend/dist`
 - Backend Flask chạy như service `systemd`
 - Apache2 serve domain `drums.dqcloud.online`
 - Apache reverse proxy `/api/*` sang backend tại `127.0.0.1:8001`
@@ -32,7 +41,7 @@ Production sẽ chạy theo mô hình:
 ```text
 Internet
   -> Apache2 :80 / :443
-     -> /            serve file tĩnh từ dist/
+     -> /            serve file tĩnh từ frontend/dist/
      -> /api/*       proxy tới Flask backend tại 127.0.0.1:8001
 
 Flask backend
@@ -120,7 +129,7 @@ npm -v
 Build frontend:
 
 ```bash
-cd /var/www/drums-web
+cd /var/www/drums-web/frontend
 npm install
 npm run build
 ```
@@ -128,7 +137,7 @@ npm run build
 Sau khi build xong, frontend production nằm trong:
 
 ```text
-/var/www/drums-web/dist
+/var/www/drums-web/frontend/dist
 ```
 
 ## 6. Cấu hình backend Flask
@@ -240,9 +249,9 @@ Nội dung:
     ServerName drums.dqtech.cloud
     ServerAdmin admin@drums.dqtech.cloud
 
-    DocumentRoot /home/dq/DRUMS_Web_simple_version/dist
+    DocumentRoot /home/dq/DRUMS_Web_simple_version/frontend/dist
 
-    <Directory /home/dq/DRUMS_Web_simple_version/dist>
+    <Directory /home/dq/DRUMS_Web_simple_version/frontend/dist>
         Options Indexes FollowSymLinks
         AllowOverride None
         Require all granted
@@ -268,7 +277,7 @@ Nội dung:
 
 Giải thích nhanh:
 
-- `DocumentRoot` trỏ vào `dist/` sau khi build Vite
+- `DocumentRoot` trỏ vào `frontend/dist/` sau khi build Vite
 - `RewriteRule` giúp React Router không bị `404` khi F5 ở route như `/engine`
 - `ProxyPass /api ...` để frontend vẫn gọi cùng domain
 
@@ -352,8 +361,10 @@ Mỗi lần update code:
 ```bash
 cd /var/www/drums-web
 git pull
+cd frontend
 npm install
 npm run build
+cd ..
 source .venv/bin/activate
 pip install -r backend/requirements.txt
 deactivate
@@ -394,13 +405,26 @@ Khi dùng dòng này:
 
 ## 15. File quan trọng trong project
 
-- [backend/app.py](</C:/Users/DAIKAI%20VR/Desktop/DRUMS_Web_simple_version/backend/app.py>)
-- [backend/backend_config.json](</C:/Users/DAIKAI%20VR/Desktop/DRUMS_Web_simple_version/backend/backend_config.json>)
-- [backend/requirements.txt](</C:/Users/DAIKAI%20VR/Desktop/DRUMS_Web_simple_version/backend/requirements.txt>)
-- [vite.config.mjs](</C:/Users/DAIKAI%20VR/Desktop/DRUMS_Web_simple_version/vite.config.mjs>)
+- [backend/app.py](backend/app.py)
+- [backend/backend_config.json](backend/backend_config.json)
+- [backend/requirements.txt](backend/requirements.txt)
+- [frontend/vite.config.mjs](frontend/vite.config.mjs)
 
 Nếu bạn muốn, bước tiếp theo mình có thể tạo luôn:
 
 1. file `drums-backend.service` trong repo
 2. file sample Apache vhost trong repo
 3. bản README ngắn hơn chỉ giữ đúng các lệnh cần copy-paste
+
+## Admin configuration editor
+
+Sign in as an admin and open **Configuration** (`/admin/config`) to edit
+`backend/backend_config.json`. The API checks administrator access for both
+reading and saving. Save validates the JSON structure and rejects a stale
+revision if the file changed after loading. Restart the backend after saving
+to apply the configuration; the editor does not restart the service.
+
+Set a private, random `DRUMS_SECRET_KEY` environment variable for the backend
+and use the same value across workers. If omitted, a random key is generated
+at startup and existing sessions become invalid after a restart. The previous
+hardcoded signing key is no longer used; sign in again after this update.

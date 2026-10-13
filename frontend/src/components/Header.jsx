@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import { useNavigate } from "react-router-dom";
+import AccountDropdown from "./AccountDropdown";
 
-const Header = ({ className = "", user = null, onLogout }) => {
+const Header = ({ className = "", user = null, onLogout, onChangePassword }) => {
   const [currentTime, setCurrentTime] = useState("");
   const navigate = useNavigate();
-  const userInitial = user?.username?.[0]?.toUpperCase() ?? "U";
 
   useEffect(() => {
     const formatter = new Intl.DateTimeFormat("en-GB", {
@@ -56,27 +56,16 @@ const Header = ({ className = "", user = null, onLogout }) => {
         </div>
 
         {user ? (
-          <div className="hidden rounded-xl border border-slate-600 bg-slate-700/70 px-3 py-2 text-right md:block">
-            <div className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-400">
-              {user.role}
-            </div>
-            <div className="text-sm font-semibold text-slate-100">{user.username}</div>
-          </div>
+          <AccountDropdown
+            user={user}
+            onAdmin={user.role === "admin" ? () => navigate("/admin") : undefined}
+            onConfiguration={
+              user.role === "admin" ? () => navigate("/admin/config") : undefined
+            }
+            onChangePassword={onChangePassword}
+            onLogout={onLogout}
+          />
         ) : null}
-
-        {onLogout ? (
-          <button
-            type="button"
-            onClick={onLogout}
-            className="rounded-xl border border-slate-600 bg-slate-700/70 px-3 py-2 text-sm font-semibold text-slate-100 transition hover:border-sky-400 hover:text-sky-200"
-          >
-            Logout
-          </button>
-        ) : null}
-
-        <div className="flex h-9 w-9 items-center justify-center rounded-full border border-slate-500 bg-slate-600 text-sm font-bold text-slate-100">
-          {userInitial}
-        </div>
       </div>
     </header>
   );
@@ -89,6 +78,7 @@ Header.propTypes = {
     role: PropTypes.string,
   }),
   onLogout: PropTypes.func,
+  onChangePassword: PropTypes.func,
 };
 
 export default Header;

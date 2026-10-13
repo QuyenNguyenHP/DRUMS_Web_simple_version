@@ -76,6 +76,15 @@ const authorizedFetch = async (url, token, options = {}) => {
   return readJsonOrThrow(response, `${url} request failed with status ${response.status}`);
 };
 
+export const fetchBackendConfig = (token) =>
+  authorizedFetch("/api/admin/backend-config", token, { cache: "no-store" });
+
+export const saveBackendConfig = (token, payload) =>
+  authorizedFetch("/api/admin/backend-config", token, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+
 export const fetchUsers = async (token) => {
   return authorizedFetch("/api/users", token);
 };

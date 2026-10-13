@@ -85,7 +85,21 @@ const DateField = ({ label, value, onChange }) => (
   </label>
 );
 
-const Overview = ({ user, onLogout }) => {
+const getDefaultEngineKeys = (engines = []) => {
+  const engine = engines.find((option) =>
+    [option.key, option.label].some(
+      (value) => String(value ?? "").replace(/\s+/g, "").toUpperCase() === "DG1"
+    )
+  ) ?? engines[0];
+  return engine?.key ? [engine.key] : [];
+};
+
+const normalizeChannelName = (value) => {
+  const name = String(value ?? "").trim().replace(/\s+/g, " ").toUpperCase();
+  return name === "LOAD" ? "ENGINE LOAD" : name;
+};
+
+const Graph = ({ user, onLogout }) => {
   const initialRange = useMemo(buildInitialUtcRange, []);
   const [overviewConfig, setOverviewConfig] = useState([]);
   const [selectedVessel, setSelectedVessel] = useState("");
@@ -131,7 +145,7 @@ const Overview = ({ user, onLogout }) => {
         const firstVessel = nextVessels[0] ?? null;
         setOverviewConfig(nextVessels);
         setSelectedVessel(firstVessel?.value ?? "");
-        setSelectedEngines(firstVessel?.engines?.[0]?.key ? [firstVessel.engines[0].key] : []);
+        setSelectedEngines(getDefaultEngineKeys(firstVessel?.engines));
         const nextRange = buildRangeFromVessel(firstVessel);
         setDraftStartInput(nextRange.draftStartInput);
         setDraftEndInput(nextRange.draftEndInput);
@@ -169,7 +183,7 @@ const Overview = ({ user, onLogout }) => {
     );
 
     if (nextSelectedEngines.length === 0) {
-      setSelectedEngines([engineOptions[0].key]);
+      setSelectedEngines(getDefaultEngineKeys(engineOptions));
       return;
     }
 
@@ -181,7 +195,6 @@ const Overview = ({ user, onLogout }) => {
   useEffect(() => {
     if (!selectedVessel || selectedSerialNumbers.length === 0) {
       setChannelOptions([]);
-      setSelectedChannels([]);
       setIsChartDataOpen(false);
       return;
     }
@@ -201,13 +214,16 @@ const Overview = ({ user, onLogout }) => {
         }
 
         const nextChannels = Array.isArray(payload?.channels) ? payload.channels : [];
-        const nextChannelDescriptions = new Set(
-          nextChannels.map((channel) => channel.channelDescription)
-        );
-
         setChannelOptions(nextChannels);
         setSelectedChannels((currentValues) =>
-          currentValues.filter((value) => nextChannelDescriptions.has(value))
+          currentValues
+            .map((value) =>
+              nextChannels.find(
+                (channel) =>
+                  normalizeChannelName(channel.channelDescription) === normalizeChannelName(value)
+              )?.channelDescription
+            )
+            .filter(Boolean)
         );
       })
       .catch((loadError) => {
@@ -232,6 +248,52 @@ const Overview = ({ user, onLogout }) => {
       isActive = false;
     };
   }, [selectedSerialNumbers, selectedVessel]);
+
+  // Apply the initial selection once the API has resolved the actual channel name.
+  useEffect(() => {
+    if (
+      submittedFilters || isConfigLoading || isChannelOptionsLoading ||
+      !selectedVessel || selectedSerialNumbers.length === 0 ||
+      channelOptions.length === 0 ||
+      !selectedChannels.every((value) =>
+        channelOptions.some((channel) => channel.channelDescription === value)
+      )
+    ) {
+      return;
+    }
+
+    // Resolve defaults from loaded options even if earlier loading or hot reload
+    // left the selection empty. Keep the exact API name in the request.
+    const defaultChannel = channelOptions.find(
+      (channel) => normalizeChannelName(channel.channelDescription) === "ENGINE LOAD"
+    );
+    const initialChannels = selectedChannels.length > 0
+      ? selectedChannels
+      : defaultChannel ? [defaultChannel.channelDescription] : [];
+    if (initialChannels.length === 0) {
+      return;
+    }
+
+    const startMs = fromUtcInputValue(draftStartInput);
+    const endMs = fromUtcInputValue(draftEndInput);
+    if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || startMs >= endMs) {
+      return;
+    }
+
+    setSelectedChannels(initialChannels);
+    setSubmittedFilters({
+      vessel: selectedVessel,
+      serialNumbers: selectedSerialNumbers,
+      engines: selectedEngineOptions,
+      channelDescriptions: initialChannels,
+      startMs,
+      endMs,
+    });
+  }, [
+    submittedFilters, isConfigLoading, isChannelOptionsLoading, selectedVessel,
+    selectedSerialNumbers, selectedEngineOptions, selectedChannels, channelOptions,
+    draftStartInput, draftEndInput,
+  ]);
 
   useEffect(() => {
     if (!submittedFilters?.serialNumbers?.length || activeChartChannels.length === 0) {
@@ -486,7 +548,7 @@ const Overview = ({ user, onLogout }) => {
                         overviewConfig.find((option) => option.value === nextVesselValue) ?? null;
                       setSelectedVessel(nextVesselValue);
                       setSelectedEngines(
-                        nextVessel?.engines?.[0]?.key ? [nextVessel.engines[0].key] : []
+                        getDefaultEngineKeys(nextVessel?.engines)
                       );
                       resetDraftRange(nextVessel);
                     }}
@@ -605,4 +667,4 @@ const Overview = ({ user, onLogout }) => {
   );
 };
 
-export default Overview;
+export default Graph;

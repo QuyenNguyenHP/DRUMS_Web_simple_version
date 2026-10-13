@@ -8,8 +8,9 @@ import {
 } from "react-router-dom";
 
 import Overview from "./pages/Overview";
-import Engine from "./pages/Engine";
+import Graph from "./pages/Graph";
 import AdminPage from "./pages/AdminPage";
+import BackendConfigPage from "./pages/BackendConfigPage";
 import LoginPage from "./pages/LoginPage";
 import {
   clearStoredSession,
@@ -18,13 +19,17 @@ import {
 } from "./services/authApi";
 
 const PAGE_META = {
+  "/admin/config": {
+    title: "DRUMS APPLICATION",
+    description: "Administrator backend configuration editor.",
+  },
   "/": {
     title: "DRUMS APPLICATION",
     description: "Overview dashboard starter page.",
   },
-  "/engine": {
+  "/graph": {
     title: "DRUMS APPLICATION",
-    description: "Engine dashboard starter page.",
+    description: "Graph dashboard page.",
   },
   "/pressure_trend": {
     title: "DRUMS APPLICATION",
@@ -86,26 +91,32 @@ function App() {
 
   return (
     <Routes>
+      <Route
+        path="/admin/config"
+        element={isAdmin ? (
+          <BackendConfigPage authToken={session.token} user={session.user} onLogout={handleLogout} />
+        ) : <Navigate to="/" replace />}
+      />
       <Route path="/" element={<Overview user={session.user} onLogout={handleLogout} />} />
       <Route
-        path="/engine"
-        element={<Engine user={session.user} onLogout={handleLogout} />}
+        path="/graph"
+        element={<Graph user={session.user} onLogout={handleLogout} />}
       />
       <Route
         path="/pressure_trend"
-        element={<Overview user={session.user} onLogout={handleLogout} />}
+        element={<Graph user={session.user} onLogout={handleLogout} />}
       />
       <Route
         path="/exh_temp_trend"
-        element={<Overview user={session.user} onLogout={handleLogout} />}
+        element={<Graph user={session.user} onLogout={handleLogout} />}
       />
       <Route
         path="/fo-consumption"
-        element={<Overview user={session.user} onLogout={handleLogout} />}
+        element={<Graph user={session.user} onLogout={handleLogout} />}
       />
       <Route
         path="/alarms"
-        element={<Overview user={session.user} onLogout={handleLogout} />}
+        element={<Graph user={session.user} onLogout={handleLogout} />}
       />
       <Route
         path="/admin"
@@ -121,6 +132,7 @@ function App() {
           )
         }
       />
+      <Route path="/engine" element={<Navigate to="/" replace />} />
       <Route path="/login" element={<Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

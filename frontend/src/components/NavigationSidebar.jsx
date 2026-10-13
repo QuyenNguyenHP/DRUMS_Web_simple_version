@@ -2,17 +2,12 @@ import PropTypes from "prop-types";
 import { NavLink } from "react-router-dom";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Overview", icon: "/overview.svg" },
-  { to: "/engine", label: "Engine", icon: "/engine.svg" },
+  { to: "/", label: "Overview", icon: "/engine.svg" },
+  { to: "/graph", label: "Graph", icon: "/overview.svg" },
   { to: "/pressure_trend", label: "Pending 2", icon: "/overview.svg" },
 ];
 
-const NavigationSidebar = ({ className = "", user = null }) => {
-  const navItems =
-    user?.role === "admin"
-      ? [...NAV_ITEMS, { to: "/admin", label: "Admin", icon: "/overview.svg" }]
-      : NAV_ITEMS;
-
+const NavigationSidebar = ({ className = "" }) => {
   return (
     <aside
       className={`flex flex-col border-r border-slate-700 bg-slate-800 text-slate-400 ${className}`}
@@ -24,8 +19,8 @@ const NavigationSidebar = ({ className = "", user = null }) => {
       </div>
 
       <div className="flex-1 py-2">
-        {navItems.map((item) => (
-          <NavLink key={item.to} to={item.to} end={item.to === "/"}>
+        {NAV_ITEMS.map((item) => (
+          <NavLink key={item.to} to={item.to} end>
             {({ isActive }) => (
               <div
                 className={[
@@ -79,10 +74,6 @@ const NavigationSidebar = ({ className = "", user = null }) => {
 
 NavigationSidebar.propTypes = {
   className: PropTypes.string,
-  user: PropTypes.shape({
-    username: PropTypes.string,
-    role: PropTypes.string,
-  }),
 };
 
 export default NavigationSidebar;
