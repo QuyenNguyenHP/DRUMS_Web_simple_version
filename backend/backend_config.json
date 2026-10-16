@@ -149,6 +149,32 @@
         }
       ]
     },
+        "DB66-02": {
+      "label": "DB66-02",
+      "ship_name": "DB66-02",
+      "database": "truongminh",
+      "channel_table": "truongminh_channel",
+      "latest_data_table": "truongminh_increment",
+      "data_table": "silver_truong_minh_dream_02",
+      "engine_svg_mapping": "truong_minh",
+      "engines": [
+        {
+          "key": "DG1",
+          "label": "DG1",
+          "serialNo": "DG1 DE618Z4585"
+        },
+        {
+          "key": "DG2",
+          "label": "DG2",
+          "serialNo": "DG2 DE618Z4586"
+        },
+        {
+          "key": "DG3",
+          "label": "DG3",
+          "serialNo": "DG3 DE618Z4587"
+        }
+      ]
+    },
     "Dubai Sky": {
       "label": "Dubai Sky",
       "ship_name": "Dubai Sky",
@@ -175,33 +201,7 @@
         }
       ]
     },
-    "DB66-02": {
-      "label": "DB66-02",
-      "ship_name": "DB66-02",
-      "database": "truongminh",
-      "channel_table": "truongminh_channel",
-      "latest_data_table": "truongminh_increment",
-      "data_table": "silver_truong_minh_dream_02",
-      "engine_svg_mapping": "truong_minh",
-      "engines": [
-        {
-          "key": "DG1",
-          "label": "DG1",
-          "serialNo": "DG1 DE618Z4585"
-        },
-        {
-          "key": "DG2",
-          "label": "DG2",
-          "serialNo": "DG2 DE618Z4586"
-        },
-        {
-          "key": "DG3",
-          "label": "DG3",
-          "serialNo": "DG3 DE618Z4587"
-        }
-      ]
-    },
-    "Dubai Eco": {
+        "Dubai Eco": {
       "label": "Dubai Eco",
       "ship_name": "Dubai Eco",
       "database": "emarat_v2",
@@ -224,6 +224,84 @@
           "key": "DG3",
           "label": "DG3",
           "serialNo": "DG3 DE618Z5168"
+        }
+      ]
+    },
+        "Dubai World": {
+      "label": "Dubai World",
+      "ship_name": "Dubai World",
+      "database": "emarat_v2",
+      "channel_table": "dubai_channel_Q",
+      "latest_data_table": "dubai_increment",
+      "data_table": "silver_dubai_world",
+      "engine_svg_mapping": "emarat",
+      "engines": [
+        {
+          "key": "DG1",
+          "label": "DG1",
+          "serialNo": "DG1 DE618Z5038"
+        },
+        {
+          "key": "DG2",
+          "label": "DG2",
+          "serialNo": "DG2 DE618Z5039"
+        },
+        {
+          "key": "DG3",
+          "label": "DG3",
+          "serialNo": "DG3 DE618Z5040"
+        }
+      ]
+    },
+        "Dubai Earth": {
+      "label": "Dubai Earth",
+      "ship_name": "Dubai Earth",
+      "database": "emarat_v2",
+      "channel_table": "dubai_channel_Q",
+      "latest_data_table": "dubai_increment",
+      "data_table": "silver_dubai_earth",
+      "engine_svg_mapping": "emarat",
+      "engines": [
+        {
+          "key": "DG1",
+          "label": "DG1",
+          "serialNo": "DG1 DE618Z5246"
+        },
+        {
+          "key": "DG2",
+          "label": "DG2",
+          "serialNo": "DG2 DE618Z5247"
+        },
+        {
+          "key": "DG3",
+          "label": "DG3",
+          "serialNo": "DG3 DE618Z5248"
+        }
+      ]
+    },
+    "Dubai Ocean": {
+      "label": "Dubai Ocean",
+      "ship_name": "Dubai Ocean",
+      "database": "emarat_v2",
+      "channel_table": "dubai_channel_Q",
+      "latest_data_table": "dubai_increment",
+      "data_table": "silver_dubai_ocean",
+      "engine_svg_mapping": "emarat",
+      "engines": [
+        {
+          "key": "DG1",
+          "label": "DG1",
+          "serialNo": "DG1 DE618Z5306"
+        },
+        {
+          "key": "DG2",
+          "label": "DG2",
+          "serialNo": "DG2 DE618Z5307"
+        },
+        {
+          "key": "DG3",
+          "label": "DG3",
+          "serialNo": "DG3 DE618Z5308"
         }
       ]
     },
