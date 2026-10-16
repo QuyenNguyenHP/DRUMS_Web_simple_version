@@ -62,8 +62,13 @@ const BackendConfigPage = ({ authToken, user, onLogout }) => {
     try {
       const config = parseDraft();
       setBusy(true);
-      accept(await saveBackendConfig(authToken, { config, revision }));
-      setMessage("Configuration saved. Restart the backend to apply these changes.");
+      const payload = await saveBackendConfig(authToken, { config, revision });
+      accept(payload);
+      if (payload.restartScheduled) {
+        setMessage("Configuration saved. Backend restart scheduled; the service may be unavailable briefly. Your session will be kept.");
+      } else {
+        setError(payload.warning || "Configuration saved, but the backend still needs restarting.");
+      }
     } catch (cause) { setError(cause.message); }
     finally { setBusy(false); }
   };
@@ -85,7 +90,7 @@ const BackendConfigPage = ({ authToken, user, onLogout }) => {
             <div>
               <h1 className="text-2xl font-bold">Backend configuration</h1>
               <p className="mt-2 text-sm text-slate-400">Edit database connections, vessels, engines and graph settings.</p>
-              <p className="mt-1 text-sm text-amber-300">Changes take effect after restarting the backend.</p>
+              <p className="mt-1 text-sm text-amber-300">Saving automatically restarts the backend to apply changes.</p>
             </div>
             <span className="rounded-full border border-sky-800 bg-sky-950 px-3 py-1 text-xs text-sky-300">Admin only</span>
           </div>
@@ -107,7 +112,7 @@ const BackendConfigPage = ({ authToken, user, onLogout }) => {
               className="min-h-[60vh] w-full resize-y rounded-lg border border-slate-600 bg-slate-950 p-4 font-mono text-sm leading-6 text-slate-200 outline-none focus:border-sky-400 disabled:opacity-60"
             />
             <div className="mt-4 flex flex-wrap gap-3">
-              <button type="button" onClick={save} disabled={busy || !revision || !dirty} className={`${buttonClass} border-blue-500 bg-blue-600 hover:bg-blue-500`}>Save configuration</button>
+              <button type="button" onClick={save} disabled={busy || !revision} className={`${buttonClass} border-blue-500 bg-blue-600 hover:bg-blue-500`}>Save and restart backend</button>
               <button type="button" onClick={format} disabled={busy || !revision} className={buttonClass}>Format JSON</button>
               <button type="button" onClick={reload} disabled={busy} className={buttonClass}>Reload from server</button>
             </div>

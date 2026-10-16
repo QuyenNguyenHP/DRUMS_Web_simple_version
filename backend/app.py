@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import os
-import secrets
+from session_secret import load_session_secret
 
 from flask import Flask
 from flask_cors import CORS
@@ -13,7 +12,7 @@ from database_api_overview import overview_api
 
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = os.environ.get("DRUMS_SECRET_KEY") or secrets.token_hex(32)
+app.config["SECRET_KEY"] = load_session_secret()
 CORS(app, allow_headers=["Content-Type", "Authorization"])
 
 app.register_blueprint(auth_api)

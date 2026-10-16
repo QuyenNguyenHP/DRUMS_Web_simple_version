@@ -21,6 +21,8 @@ class ConfigApiTests(unittest.TestCase):
         self.path_patch.start()
         self.users_patch = patch.object(config_api, "list_users", return_value=[{"username": "admin", "role": "admin"}])
         self.users_patch.start()
+        self.restart_patch = patch.object(config_api, "schedule_backend_restart")
+        self.restart = self.restart_patch.start()
         self.app = Flask(__name__)
         self.app.config.update(TESTING=True, SECRET_KEY="test-only-secret")
         self.app.register_blueprint(config_api.config_api)
@@ -29,6 +31,7 @@ class ConfigApiTests(unittest.TestCase):
 
     def tearDown(self):
         self.users_patch.stop()
+        self.restart_patch.stop()
         self.path_patch.stop()
         self.directory.cleanup()
 
@@ -52,7 +55,9 @@ class ConfigApiTests(unittest.TestCase):
         payload["config"]["overview_trend"]["max_points_per_series"] = 400
         saved = self.client.put(self.url, headers=self.headers(), json=payload)
         self.assertEqual(saved.status_code, 200, saved.get_json())
-        self.assertTrue(saved.get_json()["restartRequired"])
+        self.assertTrue(saved.get_json()["restartScheduled"])
+        self.assertFalse(saved.get_json()["restartRequired"])
+        self.restart.assert_called_once()
         self.assertEqual(json.loads(self.path.read_bytes())["overview_trend"]["max_points_per_series"], 400)
         self.assertEqual(self.client.put(self.url, headers=self.headers(), json=payload).status_code, 409)
 
@@ -73,6 +78,17 @@ class ConfigApiTests(unittest.TestCase):
             response = self.client.put(self.url, headers=self.headers(), json=payload)
         self.assertEqual(response.status_code, 500)
         self.assertEqual(self.path.read_bytes(), self.original)
+        self.restart.assert_not_called()
+
+    def test_restart_failure_reports_saved_configuration(self):
+        payload = self.client.get(self.url, headers=self.headers()).get_json()
+        payload["config"]["overview_trend"]["max_points_per_series"] = 401
+        self.restart.side_effect = OSError("restart unavailable")
+        response = self.client.put(self.url, headers=self.headers(), json=payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.get_json()["restartScheduled"])
+        self.assertTrue(response.get_json()["restartRequired"])
+        self.assertEqual(json.loads(self.path.read_bytes())["overview_trend"]["max_points_per_series"], 401)
         self.assertEqual(list(self.path.parent.iterdir()), [self.path])
 
 

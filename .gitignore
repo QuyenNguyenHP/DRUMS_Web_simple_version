@@ -7,6 +7,7 @@ build/
 *.log
 __pycache__/
 *.pyc
+backend/.session-secret
 backend/database/*.db
 backend/database/*.sqlite
 backend/database/*.sqlite3

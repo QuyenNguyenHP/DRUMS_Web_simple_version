@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 
 import Footer from "../components/Footer";
 import Header from "../components/Header";
@@ -118,6 +119,11 @@ export default function AdminPage({ authToken, user, onLogout }) {
                     Create local users and assign either `admin` or `user` role.
                     Only admins can open this page.
                   </p>
+                  {user.role === "admin" && (
+                    <Link to="/admin/config" className="mt-3 inline-block text-sm font-semibold text-sky-300 hover:text-sky-200">
+                      Edit backend configuration
+                    </Link>
+                  )}
                 </div>
                 <button
                   type="button"

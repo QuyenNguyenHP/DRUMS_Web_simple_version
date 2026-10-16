@@ -11,6 +11,7 @@ from typing import Any
 
 import pymysql
 from flask import Blueprint, jsonify, request
+from engine_mapping_config import resolve_vessel_mappings
 
 overview_api = Blueprint("overview_api", __name__)
 BASE_DIR = Path(__file__).resolve().parent
@@ -27,7 +28,7 @@ CONFIG = load_json_config("backend_config.json")
 DATABASE_CONNECTION_CONFIG = CONFIG.get("database_connection", {})
 HISTORY_CONFIG = CONFIG.get("history_trend", {})
 OVERVIEW_CONFIG = CONFIG.get("overview_trend", {})
-VESSEL_CONFIGS = CONFIG.get("vessels", {})
+VESSEL_CONFIGS = resolve_vessel_mappings(CONFIG)
 
 
 def resolve_database_path(relative_path: str) -> Path:

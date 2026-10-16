@@ -17,7 +17,54 @@
     "value_column": "value",
     "unit_column": "unit",
     "default_window_minutes": 240,
-    "default_series": ["line_speed", "motor_current"]
+    "default_series": [
+      "line_speed",
+      "motor_current"
+    ]
+  },
+  "engine_svg_mappings": {
+    "truong_minh": {
+      "no1_temp_c": ["No.1 cylinder exhaust gas temp."],
+      "no2_temp_c": ["No.2 cylinder exhaust gas temp."],
+      "no3_temp_c": ["No.3 cylinder exhaust gas temp."],
+      "no4_temp_c": ["No.4 cylinder exhaust gas temp."],
+      "no5_temp_c": ["No.5 cylinder exhaust gas temp."],
+      "no6_temp_c": ["No.6 cylinder exhaust gas temp."],
+      "starting_air_mpa": ["Starting air pressure"],
+      "ex_gas_tc_out_c": ["Exhaust gas temp. T/C outlet"],
+      "ex_gas_tc_in1_c": ["Exhaust gas temp. T/C inlet 1"],
+      "ex_gas_tc_in2_c": ["Exhaust gas temp. T/C inlet 2"],
+      "lo_inlet_mpa": ["Lub. oil pressure"],
+      "fo_inlet_mpa": ["Fuel oil pressure engine inlet"],
+      "lt_cw_inlet_mpa": ["Low temp. cooling water presure engine inlet"],
+      "ht_cw_inlet_mpa": ["High temp. cooling water pressure engine inlet"],
+      "ht_cw_outlet_c": ["High temp. cooling water temp. engine outlet"],
+      "lo_inlet_c": ["Lub. oil temp. engine inlet"],
+      "engine_load_ekw": ["Load"],
+      "engine_speed_rpm": ["Engine speed"],
+      "running_hour_h": ["Running hour"]
+    },
+    "emarat": {
+      "no1_temp_c": ["CYL1 EXH. GAS TEMP."],
+      "no2_temp_c": ["CYL2 EXH. GAS TEMP."],
+      "no3_temp_c": ["CYL3 EXH. GAS TEMP."],
+      "no4_temp_c": ["CYL4 EXH. GAS TEMP."],
+      "no5_temp_c": ["CYL5 EXH. GAS TEMP."],
+      "no6_temp_c": ["CYL6 EXH. GAS TEMP."],
+      "starting_air_mpa": ["START AIR LOW PRESS. ALARM"],
+      "ex_gas_tc_out_c": ["EXH. GAS TEMP. T/C OUTLET"],
+      "ex_gas_tc_in1_c": ["EXH. GAS T/C INLET 1 TEMP"],
+      "ex_gas_tc_in2_c": ["EXH. GAS T/C INLET 2 TEMP H"],
+      "lo_inlet_mpa": ["LUB OIL LOW PRESS ALARM"],
+      "fo_inlet_mpa": ["F.O. PRESS. INLET"],
+      "lt_cw_inlet_mpa": [],
+      "ht_cw_inlet_mpa": ["C.F.W. ENG. INLET LOW PRESS. ALA"],
+      "ht_cw_outlet_c": ["C.F.W. ENG. OUTLET HIGH TEMP ALA"],
+      "lo_inlet_c": ["L.O. ENGINE INLET HIGH TEMP. ALA"],
+      "engine_load_ekw": ["ENGINE LOAD"],
+      "engine_speed_rpm": ["ENGINE SPEED"],
+      "running_hour_h": ["ENGINE RUNNING HOUR"]
+    }
   },
   "vessels": {
     "H429": {
@@ -82,28 +129,8 @@
       "database": "truongminh",
       "channel_table": "truongminh_channel",
       "latest_data_table": "truongminh_increment",
-      "data_table": "silver_truongminh",
-      "engine_svg_mapping": {
-        "no1_temp_c": ["No.1 cylinder exhaust gas temp."],
-        "no2_temp_c": ["No.2 cylinder exhaust gas temp."],
-        "no3_temp_c": ["No.3 cylinder exhaust gas temp."],
-        "no4_temp_c": ["No.4 cylinder exhaust gas temp."],
-        "no5_temp_c": ["No.5 cylinder exhaust gas temp."],
-        "no6_temp_c": ["No.6 cylinder exhaust gas temp."],
-        "starting_air_mpa": ["Starting air pressure"],
-        "ex_gas_tc_out_c": ["Exhaust gas temp. T/C outlet"],
-        "ex_gas_tc_in1_c": ["Exhaust gas temp. T/C inlet 1"],
-        "ex_gas_tc_in2_c": ["Exhaust gas temp. T/C inlet 2"],
-        "lo_inlet_mpa": ["Lub. oil pressure"],
-        "fo_inlet_mpa": ["Fuel oil pressure engine inlet"],
-        "lt_cw_inlet_mpa": ["Low temp. cooling water presure engine inlet"],
-        "ht_cw_inlet_mpa": ["High temp. cooling water pressure engine inlet"],
-        "ht_cw_outlet_c": ["High temp. cooling water temp. engine outlet"],
-        "lo_inlet_c": ["Lub. oil temp. engine inlet"],
-        "engine_load_ekw": ["Load"],
-        "engine_speed_rpm": ["Engine speed"],
-        "running_hour_h": ["Running hour"]
-      },
+      "data_table": "silver_truong_minh_dream_05",
+      "engine_svg_mapping": "truong_minh",
       "engines": [
         {
           "key": "DG1",
@@ -126,30 +153,10 @@
       "label": "Dubai Sky",
       "ship_name": "Dubai Sky",
       "database": "emarat_v2",
-      "channel_table": "dubai_sky_channel",
+      "channel_table": "dubai_channel",
       "latest_data_table": "dubai_increment",
       "data_table": "silver_dubai_sky",
-      "engine_svg_mapping": {
-        "no1_temp_c": ["CYL1 EXH. GAS TEMP."],
-        "no2_temp_c": ["CYL2 EXH. GAS TEMP."],
-        "no3_temp_c": ["CYL3 EXH. GAS TEMP."],
-        "no4_temp_c": ["CYL4 EXH. GAS TEMP."],
-        "no5_temp_c": ["CYL5 EXH. GAS TEMP."],
-        "no6_temp_c": ["CYL6 EXH. GAS TEMP."],
-        "starting_air_mpa": ["START AIR LOW PRESS. ALARM"],
-        "ex_gas_tc_out_c": ["EXH. GAS TEMP. T/C OUTLET"],
-        "ex_gas_tc_in1_c": ["EXH. GAS T/C INLET 1 TEMP"],
-        "ex_gas_tc_in2_c": ["EXH. GAS T/C INLET 2 TEMP H"],
-        "lo_inlet_mpa": ["LUB OIL LOW PRESS ALARM"],
-        "fo_inlet_mpa": ["F.O. PRESS. INLET"],
-        "lt_cw_inlet_mpa": [],
-        "ht_cw_inlet_mpa": ["C.F.W. ENG. INLET LOW PRESS. ALA"],
-        "ht_cw_outlet_c": ["C.F.W. ENG. OUTLET HIGH TEMP ALA"],
-        "lo_inlet_c": ["L.O. ENGINE INLET HIGH TEMP. ALA"],
-        "engine_load_ekw": ["ENGINE LOAD"],
-        "engine_speed_rpm": ["ENGINE SPEED"],
-        "running_hour_h": ["ENGINE RUNNING HOUR"]
-      },
+      "engine_svg_mapping": "emarat",
       "engines": [
         {
           "key": "DG1",
@@ -165,6 +172,84 @@
           "key": "DG3",
           "label": "DG3",
           "serialNo": "DG3 DE618Z5342"
+        }
+      ]
+    },
+    "DB66-02": {
+      "label": "DB66-02",
+      "ship_name": "DB66-02",
+      "database": "truongminh",
+      "channel_table": "truongminh_channel",
+      "latest_data_table": "truongminh_increment",
+      "data_table": "silver_truong_minh_dream_02",
+      "engine_svg_mapping": "truong_minh",
+      "engines": [
+        {
+          "key": "DG1",
+          "label": "DG1",
+          "serialNo": "DG1 DE618Z4585"
+        },
+        {
+          "key": "DG2",
+          "label": "DG2",
+          "serialNo": "DG2 DE618Z4586"
+        },
+        {
+          "key": "DG3",
+          "label": "DG3",
+          "serialNo": "DG3 DE618Z4587"
+        }
+      ]
+    },
+    "Dubai Eco": {
+      "label": "Dubai Eco",
+      "ship_name": "Dubai Eco",
+      "database": "emarat_v2",
+      "channel_table": "",
+      "latest_data_table": "dubai_increment",
+      "data_table": "silver_dubai_eco",
+      "engine_svg_mapping": "emarat",
+      "engines": [
+        {
+          "key": "DG1",
+          "label": "DG1",
+          "serialNo": "DG1 DE618Z5166"
+        },
+        {
+          "key": "DG2",
+          "label": "DG2",
+          "serialNo": "DG2 DE618Z5167"
+        },
+        {
+          "key": "DG3",
+          "label": "DG3",
+          "serialNo": "DG3 DE618Z5168"
+        }
+      ]
+    },
+    "Dubai Nature": {
+      "label": "Dubai Nature",
+      "ship_name": "Dubai Nature",
+      "database": "emarat_v2",
+      "channel_table": "dubai_channel",
+      "latest_data_table": "dubai_increment",
+      "data_table": "silver_dubai_nature",
+      "engine_svg_mapping": "emarat",
+      "engines": [
+        {
+          "key": "DG1",
+          "label": "DG1",
+          "serialNo": "DG1 DE618Z5057"
+        },
+        {
+          "key": "DG2",
+          "label": "DG2",
+          "serialNo": "DG2 DE618Z5058"
+        },
+        {
+          "key": "DG3",
+          "label": "DG3",
+          "serialNo": "DG3 DE618Z5059"
         }
       ]
     }

@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import tempfile
+import subprocess
 from pathlib import Path
 from threading import Lock
 
@@ -12,10 +13,20 @@ from flask import Blueprint, current_app, jsonify, request
 
 from auth_api import require_admin
 from auth_store import list_users
+from engine_mapping_config import resolve_vessel_mappings
 
 config_api = Blueprint("config_api", __name__)
 CONFIG_PATH = Path(__file__).resolve().parent / "backend_config.json"
 CONFIG_LOCK = Lock()
+
+
+def schedule_backend_restart():
+    # systemd owns the timer so it survives termination of this service.
+    subprocess.run(
+        ["sudo", "-n", "/usr/bin/systemd-run", "--on-active=3s",
+         "/usr/bin/systemctl", "restart", "drums-backend.service"],
+        check=True, capture_output=True, timeout=10,
+    )
 
 
 def validate_config(config):
@@ -66,9 +77,7 @@ def validate_config(config):
             if engine["key"] in keys:
                 raise ValueError(f"vessels.{name}: engine keys must be unique.")
             keys.add(engine["key"])
-        mapping = vessel.get("engine_svg_mapping", {})
-        if not isinstance(mapping, dict) or any(not isinstance(aliases, list) or not all(isinstance(alias, str) for alias in aliases) for aliases in mapping.values()):
-            raise ValueError(f"vessels.{name}.engine_svg_mapping must contain arrays of strings.")
+    resolve_vessel_mappings(config)
     # Reject non-standard JSON numbers such as NaN and Infinity.
     json.dumps(config, allow_nan=False)
 
@@ -115,7 +124,15 @@ def backend_config():
             finally:
                 if temporary_path and temporary_path.exists():
                     temporary_path.unlink()
-            return jsonify(config=config, revision=revision(content), restartRequired=True)
+            try:
+                schedule_backend_restart()
+            except (OSError, subprocess.SubprocessError):
+                current_app.logger.warning("Configuration saved, but backend restart could not be scheduled.")
+                return jsonify(config=config, revision=revision(content), restartScheduled=False,
+                               restartRequired=True,
+                               warning="Configuration saved, but automatic restart failed. Check the service restart permissions." )
+            return jsonify(config=config, revision=revision(content), restartScheduled=True,
+                           restartRequired=False)
     except (ValueError, TypeError):
         # Validation errors contain field names only; never echo configuration values.
         if request.method == "PUT":
