@@ -3,10 +3,9 @@ import { NavLink } from "react-router-dom";
 
 const NAV_ITEMS = [
   { to: "/", label: "Overview", icon: "/vessel.svg" },
-  { to: "/engine", label: "Engine Page", icon: "/engine.svg" },
-  { to: "/graph", label: "Graph", icon: "/overview.svg" },
-  { to: "/pressure_trend", label: "Pending 2", icon: "/overview.svg" },
-  { to: "/about", label: "About DRUMS", icon: "/overview.svg" },
+  { to: "/engine", label: "Engine", icon: "/Engine.png" },
+  { to: "/graph", label: "Graph", icon: "/diagram.png" },
+  { to: "/about", label: "About DRUMS", icon: "/info.png" },
 ];
 
 const NavigationSidebar = ({ className = "" }) => {
@@ -58,17 +57,6 @@ const NavigationSidebar = ({ className = "" }) => {
             )}
           </NavLink>
         ))}
-      </div>
-
-      <div className="border-t border-slate-700 px-4 py-4">
-        <div className="mb-1 flex items-center justify-between text-xs">
-          <span className="text-slate-400">Stations Online:</span>
-          <span className="font-bold text-green-500">8/8</span>
-        </div>
-        <div className="flex items-center justify-between text-xs">
-          <span className="text-slate-400">Network Status:</span>
-          <span className="font-bold text-green-500">Good</span>
-        </div>
       </div>
     </aside>
   );

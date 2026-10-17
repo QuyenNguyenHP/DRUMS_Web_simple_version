@@ -53,6 +53,26 @@
 .about-features > div { display: flex; align-items: center; gap: 20px; padding: 20px 0; border-bottom: 1px solid #243448; }
 .about-features span { color: #67d8ec; font-size: 11px; }
 .about-features h3 { margin: 0; font-size: 16px; }
+.about-gallery-section { background: #081523; }
+.about-gallery { outline: none; }
+.about-gallery:focus-visible { border-radius: 10px; outline: 3px solid #67e8f9; outline-offset: 6px; }
+.about-gallery-stage { position: relative; height: clamp(430px, 63vw, 720px); overflow: hidden; border: 1px solid #345069; border-radius: 10px; background: #020811; }
+.about-gallery-image { display: block; width: 100%; height: 100%; object-fit: contain; animation: aboutGalleryEnter .55s ease both; }
+.about-gallery-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, transparent 48%, rgba(2, 8, 17, .92) 100%); }
+.about-gallery-caption { position: absolute; left: clamp(20px, 4vw, 52px); right: clamp(20px, 4vw, 52px); bottom: 32px; max-width: 620px; }
+.about-gallery-caption > span { color: #8ae5ef; font-size: 10px; font-weight: 700; letter-spacing: .16em; }
+.about-gallery-caption h3 { margin: 10px 0 6px; font-size: clamp(22px, 3vw, 34px); }
+.about-gallery-caption p { margin: 0; color: #cfdee9 !important; font-size: 13px !important; line-height: 1.6 !important; }
+.about-gallery-controls { position: absolute; right: 24px; bottom: 28px; display: flex; align-items: center; gap: 8px; }
+.about-gallery-controls button { min-width: 44px; height: 42px; border: 1px solid rgba(138, 229, 239, .5); border-radius: 6px; background: rgba(7, 17, 31, .86); color: #eafcff; cursor: pointer; font-size: 16px; transition: border-color .2s, background .2s, transform .2s; }
+.about-gallery-controls button:nth-child(2) { min-width: 70px; padding: 0 15px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; }
+.about-gallery-controls button:hover { border-color: #8ae5ef; background: #123047; transform: translateY(-2px); }
+.about-gallery-thumbnails { display: grid; grid-auto-flow: column; grid-auto-columns: 112px; gap: 10px; margin-top: 14px; padding: 4px 2px 12px; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-color: #4d7189 #0b1827; }
+.about-gallery-thumbnails button { position: relative; height: 74px; overflow: hidden; border: 2px solid transparent; border-radius: 6px; padding: 0; background: #0b1827; cursor: pointer; opacity: .55; transition: opacity .2s, border-color .2s, transform .2s; }
+.about-gallery-thumbnails button:hover { opacity: .9; transform: translateY(-2px); }
+.about-gallery-thumbnails button.is-active { border-color: #8ae5ef; opacity: 1; }
+.about-gallery-thumbnails img { display: block; width: 100%; height: 100%; object-fit: cover; }
+@keyframes aboutGalleryEnter { from { opacity: .35; transform: scale(1.015); } to { opacity: 1; transform: scale(1); } }
 .about-security { background: linear-gradient(120deg, #102c3d, #0b1b2d); display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; }
 .about-security .about-intro { margin-bottom: 0; }
 .about-security ul { list-style: none; margin: 0; padding: 0; align-self: center; }
@@ -70,6 +90,6 @@
 .about-page [data-reveal] { transition: opacity .7s ease, transform .7s ease; }
 .about-page .reveal-pending { opacity: 0; transform: translateY(28px); }
 @media (max-width: 1023px) { .about-layout { flex-direction: column; } .about-hero { min-height: 580px; } }
-@media (max-width: 640px) { .about-shell > header { height: auto; min-height: 76px; flex-wrap: wrap; padding-top: 12px; padding-bottom: 12px; } .about-shell > header button > span { font-size: 18px; } .about-hero { min-height: 570px; padding-top: 60px; padding-bottom: 80px; } .about-section { padding-top: 60px; padding-bottom: 60px; } .about-benefits, .about-flow, .about-security { grid-template-columns: 1fr; } .about-features { grid-template-columns: 1fr; } .about-records { grid-template-columns: repeat(2, 1fr); } .about-closing { flex-direction: column; align-items: flex-start; } .about-chapters { gap: 24px; } }
-@media (prefers-reduced-motion: reduce) { .about-page [data-reveal], .about-button { transition: none; transform: none; } .about-page .reveal-pending { opacity: 1; transform: none; } }
+@media (max-width: 640px) { .about-shell > header { height: auto; min-height: 76px; flex-wrap: wrap; padding-top: 12px; padding-bottom: 12px; } .about-shell > header button > span { font-size: 18px; } .about-hero { min-height: 570px; padding-top: 60px; padding-bottom: 80px; } .about-section { padding-top: 60px; padding-bottom: 60px; } .about-benefits, .about-flow, .about-security { grid-template-columns: 1fr; } .about-features { grid-template-columns: 1fr; } .about-records { grid-template-columns: repeat(2, 1fr); } .about-closing { flex-direction: column; align-items: flex-start; } .about-chapters { gap: 24px; } .about-gallery-stage { height: 520px; } .about-gallery-caption { bottom: 86px; } .about-gallery-controls { left: 18px; right: auto; bottom: 24px; } .about-gallery-thumbnails { grid-auto-columns: 92px; } }
+@media (prefers-reduced-motion: reduce) { .about-page [data-reveal], .about-button, .about-gallery-image, .about-gallery-controls button, .about-gallery-thumbnails button { animation: none; transition: none; transform: none; } .about-page .reveal-pending { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: no-preference) { html:has(.about-page) { scroll-behavior: smooth; } }
