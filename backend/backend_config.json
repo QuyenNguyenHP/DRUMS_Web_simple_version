@@ -151,7 +151,7 @@
     },
         "DB66-02": {
       "label": "DB66-02",
-      "ship_name": "DB66-02",
+      "ship_name": "Truong Minh Dream 02",
       "database": "truongminh",
       "channel_table": "truongminh_channel",
       "latest_data_table": "truongminh_increment",
@@ -205,7 +205,7 @@
       "label": "Dubai Eco",
       "ship_name": "Dubai Eco",
       "database": "emarat_v2",
-      "channel_table": "",
+      "channel_table": "dubai_channel_Q",
       "latest_data_table": "dubai_increment",
       "data_table": "silver_dubai_eco",
       "engine_svg_mapping": "emarat",

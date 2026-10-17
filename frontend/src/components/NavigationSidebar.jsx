@@ -2,9 +2,11 @@ import PropTypes from "prop-types";
 import { NavLink } from "react-router-dom";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Overview", icon: "/engine.svg" },
+  { to: "/", label: "Overview", icon: "/vessel.svg" },
+  { to: "/engine", label: "Engine Page", icon: "/engine.svg" },
   { to: "/graph", label: "Graph", icon: "/overview.svg" },
   { to: "/pressure_trend", label: "Pending 2", icon: "/overview.svg" },
+  { to: "/about", label: "About DRUMS", icon: "/overview.svg" },
 ];
 
 const NavigationSidebar = ({ className = "" }) => {

@@ -8,10 +8,12 @@ import {
 } from "react-router-dom";
 
 import Overview from "./pages/Overview";
+import EnginePage from "./pages/EnginePage";
 import Graph from "./pages/Graph";
 import AdminPage from "./pages/AdminPage";
 import BackendConfigPage from "./pages/BackendConfigPage";
 import LoginPage from "./pages/LoginPage";
+import About from "./pages/About";
 import {
   clearStoredSession,
   loadStoredSession,
@@ -19,13 +21,21 @@ import {
 } from "./services/authApi";
 
 const PAGE_META = {
+  "/about": {
+    title: "About DRUMS | Daikai Engineering",
+    description: "Discover DRUMS vessel data collection, remote monitoring, analytics and security.",
+  },
   "/admin/config": {
     title: "DRUMS APPLICATION",
     description: "Administrator backend configuration editor.",
   },
   "/": {
     title: "DRUMS APPLICATION",
-    description: "Overview dashboard starter page.",
+    description: "Fleet overview showing engine load for every vessel.",
+  },
+  "/engine": {
+    title: "Engine Page | DRUMS",
+    description: "Detailed vessel engine monitoring.",
   },
   "/graph": {
     title: "DRUMS APPLICATION",
@@ -91,6 +101,7 @@ function App() {
 
   return (
     <Routes>
+      <Route path="/about" element={<About user={session.user} onLogout={handleLogout} />} />
       <Route
         path="/admin/config"
         element={isAdmin ? (
@@ -132,7 +143,8 @@ function App() {
           )
         }
       />
-      <Route path="/engine" element={<Navigate to="/" replace />} />
+      <Route path="/engine" element={<EnginePage user={session.user} onLogout={handleLogout} />} />
+      <Route path="/overview" element={<Navigate to="/" replace />} />
       <Route path="/login" element={<Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

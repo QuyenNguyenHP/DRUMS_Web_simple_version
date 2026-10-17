@@ -9,6 +9,7 @@ import {
 } from "@mui/material";
 
 import App from "./App";
+import AppErrorBoundary from "./components/AppErrorBoundary";
 import reportWebVitals from "./reportWebVitals";
 import "./global.css";
 
@@ -48,7 +49,9 @@ root.render(
     <StyledEngineProvider injectFirst>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <App />
+        <AppErrorBoundary>
+          <App />
+        </AppErrorBoundary>
       </ThemeProvider>
     </StyledEngineProvider>
   </BrowserRouter>
