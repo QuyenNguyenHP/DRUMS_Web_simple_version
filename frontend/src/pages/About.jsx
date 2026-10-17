@@ -13,31 +13,39 @@ const benefits = [
 const features = ["Homepage console", "Dashboards", "Alarms", "Exhaust monitoring", "Anomaly detection", "AI chatbot", "Monthly reports", "Maintenance records"];
 const albumPhotos = [
   ["A close view of DRUMS CPU.jpg", "DRUMS CPU", "A close view of the DRUMS onboard processing unit."],
-  ["Bunkering operations on Dubai Sky.jpg", "Dubai Sky bunkering operation", "Bunkering operations aboard Dubai Sky."],
-  ["Carrying out DRUMS commissioning for DB45-02 Vietnam.jpg", "DB45-02 commissioning", "Commissioning the DRUMS system aboard DB45-02 in Vietnam."],
-  ["Configure data channel.jpg", "Data channel configuration", "Configuring data channels for the DRUMS monitoring system."],
-  ["DB6601.jpg", "DB6601", "DRUMS installation aboard DB6601."],
-  ["DB6602.jpg", "DB6602", "DRUMS installation aboard DB6602."],
-  ["Doing DRUMS Commissioning.jpg", "DRUMS commissioning", "Onboard commissioning and system verification in progress."],
-  ["DRUMS Box.jpg", "DRUMS Ready for Delivery", "DRUMS Ready for Delivery after packaging and testing."],
-  ["DRUMS Commisioning Comletetion.jpg", "Commissioning completed", "The DRUMS team after completing onboard commissioning."],
-  ["DRUMS DB6602 Commissioning 2.jpg", "DB6602 commissioning", "Commissioning and verification aboard DB6602."],
-  ["DRUMS EAD H429.jpg", "EAD H429", "DRUMS equipment installed aboard H429."],
-  ["DRUMS EAD Model installed under the engine control and alarm system console in ECR.jpg", "EAD installation in ECR", "The DRUMS EAD module installed below the engine control and alarm console."],
-  ["DRUMS in ECR.jpg", "DRUMS in the engine control room", "The DRUMS system operating in the vessel ECR."],
-  ["DRUMS Operation.jpg", "DRUMS operation", "Monitoring vessel information through DRUMS."],
-  ["DRUMS Presentation in IT Dept Room.jpg", "DRUMS presentation", "Presenting the DRUMS platform in the IT department room."],
-  ["DRUMS QC Inspection.jpg", "Quality inspection", "Quality control inspection before deployment."],
   ["DRUMS Testing.jpg", "System testing", "Testing the DRUMS system and connected equipment."],
-  ["DRUMS_EDA_DB6602.jpg", "EDA DB6602", "DRUMS equipment and data acquisition aboard DB6602."],
+  ["DRUMS QC Inspection.jpg", "Quality inspection", "Quality control inspection before deployment."],
+  ["DRUMS Box.jpg", "DRUMS Ready for Delivery", "DRUMS Ready for Delivery after packaging and testing."],
+  ["DRUMS Presentation in IT Dept Room.jpg", "DRUMS presentation", "Presenting the DRUMS platform in the IT department room."],
+
+  ["Bunkering operations on Dubai Sky.jpg", "Dubai Sky bunkering operation", "Bunkering operations aboard Dubai Sky."],
   ["Dubai Eco.jpg", "Dubai Eco", "DRUMS deployment aboard Dubai Eco."],
   ["Dubai Nature.jpg", "Dubai Nature", "DRUMS deployment aboard Dubai Nature."],
   ["Dubai World Vessel (2).jpg", "Dubai World vessel", "A second onboard view of Dubai World."],
   ["Dubai World Vessel.jpg", "Dubai World onboard", "An onboard view of Dubai World."],
   ["Dubai World.jpg", "Dubai World", "DRUMS deployment aboard Dubai World."],
+  
+  ["Carrying out DRUMS commissioning for DB45-02 Vietnam.jpg", "DB45-02 commissioning", "Commissioning the DRUMS system aboard DB45-02 in Vietnam."],
+  ["Configure data channel.jpg", "Data channel configuration", "Configuring data channels for the DRUMS monitoring system."],
+  ["DB6601.jpg", "DB6601", "DRUMS installation aboard DB6601."],
+  ["DB6602.jpg", "DB6602", "DRUMS installation aboard DB6602."],
+  ["Doing DRUMS Commissioning.jpg", "DRUMS commissioning", "Onboard commissioning and system verification in progress."],
+  ["DRUMS_EDA_DB6602.jpg", "EDA DB6602", "DRUMS equipment and data acquisition aboard DB6602."],
+
+  ["DRUMS Commisioning Comletetion.jpg", "Commissioning completed", "The DRUMS team after completing onboard commissioning."],
+  ["DRUMS DB6602 Commissioning 2.jpg", "DB6602 commissioning", "Commissioning and verification aboard DB6602."],
+  
+  ["DRUMS EAD Model installed under the engine control and alarm system console in ECR.jpg", "EAD installation in ECR", "The DRUMS EAD module installed below the engine control and alarm console."],
+  ["DRUMS in ECR.jpg", "DRUMS in the engine control room", "The DRUMS system operating in the vessel ECR."],
+  ["DRUMS Operation.jpg", "DRUMS operation", "Monitoring vessel information through DRUMS."],
+
+  ["DRUMS EAD H429.jpg", "EAD H429", "DRUMS equipment installed aboard H429."],
+  ["Shanaya Ferry - DRUMS Commissioning - Batam Indonesia.jpg", "Shanaya Ferry commissioning", "Commissioning DRUMS aboard Shanaya Ferry in Batam, Indonesia."],
+
+
   ["ECU.jpg", "Engine control unit", "Equipment integrated with the DRUMS data collection system."],
   ["Marine Queenie.jpg", "Marine Queenie", "DRUMS deployment aboard Marine Queenie."],
-  ["Shanaya Ferry - DRUMS Commissioning - Batam Indonesia.jpg", "Shanaya Ferry commissioning", "Commissioning DRUMS aboard Shanaya Ferry in Batam, Indonesia."],
+  
   ["Using a rope ladder to climb from the boat onto the vessel..jpg", "Boarding the vessel", "The service team boarding the vessel by rope ladder."],
   ["View of the Singapore anchorage at dawn.jpg", "Singapore anchorage at dawn", "A dawn view across the Singapore anchorage during field operations."],
 ].map(([file, title, description]) => ({
