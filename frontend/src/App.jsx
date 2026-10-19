@@ -22,8 +22,8 @@ import {
 
 const PAGE_META = {
   "/about": {
-    title: "About DRUMS | Daikai Engineering",
-    description: "Discover DRUMS vessel data collection, remote monitoring, analytics and security.",
+    title: "DRUMS | Customizable Industrial Monitoring by Daikai",
+    description: "Discover DRUMS by Daikai: customizable data collection, storage, visualization, and monitoring, from CPU board design to complete system integration.",
   },
   "/admin/config": {
     title: "DRUMS APPLICATION",

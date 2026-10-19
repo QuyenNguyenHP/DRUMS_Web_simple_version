@@ -89,6 +89,48 @@
 .about-footer { display: flex; justify-content: space-between; gap: 24px; padding: 28px clamp(24px, 6vw, 100px); border-top: 1px solid #243448; color: #9ab0c2; font-size: 11px; line-height: 1.8; }
 .about-page [data-reveal] { transition: opacity .7s ease, transform .7s ease; }
 .about-page .reveal-pending { opacity: 0; transform: translateY(28px); }
+.about-hero-support { max-width: 650px; color: #c5d7e5; font-size: 15px; line-height: 1.8; }
+.about-context { color: #8ae5ef; font-size: 13px; line-height: 1.7; margin: 22px 0; }
+.about-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.about-button-secondary { color: #c7f6fc; background: #0b2134; border: 1px solid #497584; }
+.about-button-secondary:hover { background: #193f50; }
+.about-capabilities { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 24px; }
+.about-capabilities article { border-top: 1px solid #345069; padding-top: 20px; }
+.about-engineering { background: #0a1828; }
+.about-engineering-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px; }
+.about-engineering-grid article { border-top: 1px solid #345069; padding: 12px 0 22px; }
+.about-engineering-grid article h3 { min-height: 44px; }
+.about-photo-strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 32px; }
+.about-photo-strip figure { margin: 0; min-width: 0; }
+.about-photo-strip img { width: 100%; height: 260px; object-fit: contain; background: #040e18; border-radius: 8px; }
+.about-photo-strip figcaption, .about-system-diagram figcaption { color: #b4cadb; font-size: 13px; line-height: 1.7; padding-top: 14px; }
+.about-system-diagram { margin: 0; }
+.about-diagram-area { border: 1px solid #36566d; border-radius: 12px; padding: clamp(16px, 3vw, 32px); }
+.about-diagram-area > .about-node { max-width: 540px; margin: auto; }
+.about-diagram-area > p:not(.about-eyebrow) { text-align: center; }
+.about-node { border: 1px solid #436779; border-radius: 6px; padding: 20px 14px; background: #112c3e; color: #eafaff; text-align: center; font-size: 15px; }
+.about-node small { display: block; color: #a2e3ec; margin-top: 6px; }
+.about-arrow { color: #8ae5ef; text-align: center; padding: 12px 0; font-size: 24px; }
+.about-arrow span { font-size: 12px; vertical-align: middle; }
+.about-diagram-branches { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.about-ai-branch .about-node { border-style: dashed; }
+.about-custom-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 36px; list-style: none; padding: 0; }
+.about-custom-list li { border-top: 1px solid #345069; padding: 22px 0; color: #ccdde9; font-size: 15px; line-height: 1.7; }
+.about-custom-close { max-width: 670px; margin-top: 26px; }
+.about-workflow { border-left: 3px solid #8ae5ef; padding: 20px 28px; margin-top: 38px; background: #11283a; }
+.about-workflow .about-eyebrow { margin-bottom: 8px; }
+.about-text-link { display: block; color: #8ae5ef; padding: 12px 0; width: fit-content; }
+.about-applications-list { padding-left: 20px; color: #d5e4ef; line-height: 2; }
+.about-gallery-stage { height: clamp(320px, 50vw, 600px); }
+.about-gallery-details { padding: 24px; background: #102234; border-radius: 0 0 10px 10px; }
+.about-gallery-caption { position: static; max-width: none; }
+.about-gallery-controls { position: static; margin-top: 20px; }
+.about-gallery-controls button { min-height: 44px; }
+.about-page button:focus-visible { outline: 3px solid #67e8f9; outline-offset: 4px; }
+.about-contact { background: radial-gradient(ellipse at top right, #164052, #07111f 75%); }
+.about-contact h2, .about-contact > p { max-width: 740px; }
+@media (max-width: 1200px) { .about-capabilities { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) { .about-engineering-grid, .about-photo-strip, .about-diagram-branches, .about-custom-list { grid-template-columns: 1fr; } .about-capabilities { grid-template-columns: repeat(2, minmax(0, 1fr)); } .about-engineering-grid article h3 { min-height: 0; } .about-hero { padding-top: 60px; padding-bottom: 80px; } .about-diagram-branches > div + div { border-top: 1px solid #36566d; padding-top: 24px; } }
 @media (max-width: 1023px) { .about-layout { flex-direction: column; } .about-hero { min-height: 580px; } }
 @media (max-width: 640px) { .about-shell > header { height: auto; min-height: 76px; flex-wrap: wrap; padding-top: 12px; padding-bottom: 12px; } .about-shell > header button > span { font-size: 18px; } .about-hero { min-height: 570px; padding-top: 60px; padding-bottom: 80px; } .about-section { padding-top: 60px; padding-bottom: 60px; } .about-benefits, .about-flow, .about-security { grid-template-columns: 1fr; } .about-features { grid-template-columns: 1fr; } .about-records { grid-template-columns: repeat(2, 1fr); } .about-closing { flex-direction: column; align-items: flex-start; } .about-chapters { gap: 24px; } .about-gallery-stage { height: 520px; } .about-gallery-caption { bottom: 86px; } .about-gallery-controls { left: 18px; right: auto; bottom: 24px; } .about-gallery-thumbnails { grid-auto-columns: 92px; } }
 @media (prefers-reduced-motion: reduce) { .about-page [data-reveal], .about-button, .about-gallery-image, .about-gallery-controls button, .about-gallery-thumbnails button { animation: none; transition: none; transform: none; } .about-page .reveal-pending { opacity: 1; transform: none; } }
