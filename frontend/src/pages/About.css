@@ -19,6 +19,10 @@
 .about-chapters a:hover { color: #8ae5ef; }
 .about-section { padding: 90px clamp(24px, 6vw, 100px); }
 .about-intro { max-width: 720px; margin-bottom: 45px; }
+.about-intro-wide { max-width: 1100px; }
+.about-hero-title-line { color: inherit !important; white-space: nowrap; }
+.about-single-line-title { white-space: nowrap; }
+.about-single-line-copy { white-space: nowrap; }
 .about-page h2 { font-size: clamp(28px, 3vw, 44px); line-height: 1.16; letter-spacing: -.035em; margin: 0 0 24px; font-weight: 600; }
 .about-page h3 { font-size: 18px; font-weight: 600; margin: 14px 0 12px; }
 .about-section p:not(.about-eyebrow) { color: #aabecf; font-size: 15px; line-height: 1.85; }
@@ -26,6 +30,7 @@
 .about-benefits article { border-top: 1px solid #2d4255; padding-top: 24px; }
 .about-number { color: #70dcea; font-size: 12px; }
 .about-system { background: #0c1b2c; }
+.about-intelligent { background: #07111f; }
 .about-flow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; list-style: none; margin: 0; padding: 0; }
 .about-flow li { border-left: 2px solid #55cbd9; padding: 0 20px; }
 .about-flow li > span { color: #70dcea; font-size: 12px; }
@@ -54,6 +59,7 @@
 .about-features span { color: #67d8ec; font-size: 11px; }
 .about-features h3 { margin: 0; font-size: 16px; }
 .about-gallery-section { background: #081523; }
+.about-records-section { background: #0c1b2c; }
 .about-gallery { outline: none; }
 .about-gallery:focus-visible { border-radius: 10px; outline: 3px solid #67e8f9; outline-offset: 6px; }
 .about-gallery-stage { position: relative; height: clamp(430px, 63vw, 720px); overflow: hidden; border: 1px solid #345069; border-radius: 10px; background: #020811; }
@@ -97,6 +103,8 @@
 .about-capabilities { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 24px; }
 .about-capabilities article { border-top: 1px solid #345069; padding-top: 20px; }
 .about-engineering { background: #0a1828; }
+.about-customization { background: #07111f; }
+.about-applications { background: #0c1b2c; }
 .about-engineering-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 30px; }
 .about-engineering-grid article { border-top: 1px solid #345069; padding: 12px 0 22px; }
 .about-engineering-grid article h3 { min-height: 44px; }
@@ -133,5 +141,7 @@
 @media (max-width: 760px) { .about-engineering-grid, .about-photo-strip, .about-diagram-branches, .about-custom-list { grid-template-columns: 1fr; } .about-capabilities { grid-template-columns: repeat(2, minmax(0, 1fr)); } .about-engineering-grid article h3 { min-height: 0; } .about-hero { padding-top: 60px; padding-bottom: 80px; } .about-diagram-branches > div + div { border-top: 1px solid #36566d; padding-top: 24px; } }
 @media (max-width: 1023px) { .about-layout { flex-direction: column; } .about-hero { min-height: 580px; } }
 @media (max-width: 640px) { .about-shell > header { height: auto; min-height: 76px; flex-wrap: wrap; padding-top: 12px; padding-bottom: 12px; } .about-shell > header button > span { font-size: 18px; } .about-hero { min-height: 570px; padding-top: 60px; padding-bottom: 80px; } .about-section { padding-top: 60px; padding-bottom: 60px; } .about-benefits, .about-flow, .about-security { grid-template-columns: 1fr; } .about-features { grid-template-columns: 1fr; } .about-records { grid-template-columns: repeat(2, 1fr); } .about-closing { flex-direction: column; align-items: flex-start; } .about-chapters { gap: 24px; } .about-gallery-stage { height: 520px; } .about-gallery-caption { bottom: 86px; } .about-gallery-controls { left: 18px; right: auto; bottom: 24px; } .about-gallery-thumbnails { grid-auto-columns: 92px; } }
+@media (max-width: 760px) { .about-single-line-title, .about-single-line-copy { white-space: normal; } }
+@media (max-width: 420px) { .about-hero h1 { font-size: 36px; } }
 @media (prefers-reduced-motion: reduce) { .about-page [data-reveal], .about-button, .about-gallery-image, .about-gallery-controls button, .about-gallery-thumbnails button { animation: none; transition: none; transform: none; } .about-page .reveal-pending { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: no-preference) { html:has(.about-page) { scroll-behavior: smooth; } }
