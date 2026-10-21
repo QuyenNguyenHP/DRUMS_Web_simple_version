@@ -58,6 +58,21 @@ Backend đọc file này lúc khởi động. Sau khi chỉnh sửa, cần khở
 
 Nếu dùng `/api/history/trend`, chuẩn bị SQLite theo [hướng dẫn schema](backend/database/README.md). Đường dẫn tương đối trong `history_trend.database_path` được tính từ thư mục `backend`. API này không tự tạo bảng hay dữ liệu mẫu.
 
+### SVG mapping theo từng động cơ
+
+`vessels.<vessel>.engine_svg_mapping` là mapping mặc định. Mỗi phần tử trong
+`engines` có thể thêm `engine_svg_mapping` để thay thế toàn bộ mapping mặc định
+cho riêng động cơ đó. Giá trị có thể là object `{ "svg_element_id": ["Channel name"] }`
+hoặc tên bộ mapping dùng chung trong `engine_svg_mappings`. Mảng rỗng giữ ô ở `--`;
+không dùng tên kênh cảnh báo On/Off thay cho giá trị đo.
+
+H429: DG1–DG3 dùng mapping mặc định; PORT và STBD tham chiếu
+`engine_svg_mappings.h429_main_engine`. Bộ này dùng tên kênh thực tế như
+`M/E REVOLUTION`, `NO.1 CYL. EXH. GAS OUTLET TEMP.`, `LUB. OIL PRESS.`.
+Các ô LT cooling-water pressure và running hours chưa có kênh tương ứng nên để `--`.
+Starting air dùng `NO.2 START AIR PRESS`; HT outlet temperature dùng
+`H.T. F.W. TEMP.` theo xác nhận vị trí đo đầu ra.
+
 ### 2. Khởi động backend
 
 Mở terminal tại thư mục gốc dự án.

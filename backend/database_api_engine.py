@@ -6,6 +6,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from flask import Blueprint, jsonify, request
+from engine_mapping_config import get_engine_svg_mapping
 
 from database_api_overview import (
     LATEST_TIMESTAMP_COLUMN,
@@ -23,7 +24,7 @@ from database_api_overview import (
 
 engine_api = Blueprint("engine_api", __name__)
 ENGINE_SNAPSHOT_LOOKBACK_SECONDS = 60
-ENGINE_BINDING_LOOKUP_CACHE: dict[str, dict[str, str]] = {}
+ENGINE_BINDING_LOOKUP_CACHE: dict[tuple[str, str], dict[str, str]] = {}
 ENGINE_PAYLOAD_CACHE: dict[tuple[str, str, int | None], dict[str, Any]] = {}
 
 
@@ -111,13 +112,15 @@ def map_engine_snapshot_to_svg_values(
 def build_engine_payload(vessel: str, engine_key: str) -> dict[str, Any]:
     vessel_config = get_vessel_config(vessel)
     engine = get_vessel_engine(vessel_config, engine_key)
-    engine_binding_lookup = ENGINE_BINDING_LOOKUP_CACHE.get(vessel)
+    engine_svg_mapping = get_engine_svg_mapping(vessel_config, engine)
+    binding_cache_key = (vessel, engine_key)
+    engine_binding_lookup = ENGINE_BINDING_LOOKUP_CACHE.get(binding_cache_key)
 
     if engine_binding_lookup is None:
         engine_binding_lookup = build_engine_binding_lookup(
-            vessel_config.get("engine_svg_mapping")
+            engine_svg_mapping
         )
-        ENGINE_BINDING_LOOKUP_CACHE[vessel] = engine_binding_lookup
+        ENGINE_BINDING_LOOKUP_CACHE[binding_cache_key] = engine_binding_lookup
 
     data_table = vessel_config.get("data_table")
     latest_data_table = vessel_config.get("latest_data_table")
@@ -223,7 +226,8 @@ def build_engine_payload(vessel: str, engine_key: str) -> dict[str, Any]:
         engine_label=engine.get("label", engine_key),
         latest_timestamp=snapshot_timestamp,
     )
-    for configured_element_id in (vessel_config.get("engine_svg_mapping") or {}):
+    # Clear vessel fields not supported by this engine instead of leaving SVG samples.
+    for configured_element_id in set(vessel_config.get("engine_svg_mapping") or {}) | set(engine_svg_mapping):
         values.setdefault(configured_element_id, "--")
 
     payload = {
@@ -252,7 +256,7 @@ def build_engine_payload(vessel: str, engine_key: str) -> dict[str, Any]:
             ),
             "matchedElementIds": matched_element_ids,
             "matchedElementCount": len(matched_element_ids),
-            "configuredElementCount": len(engine_binding_lookup),
+            "configuredElementCount": sum(bool(aliases) for aliases in engine_svg_mapping.values()),
             "snapshotRecordCount": len(snapshot_rows),
             "unmatchedChannels": unmatched_channels,
         },

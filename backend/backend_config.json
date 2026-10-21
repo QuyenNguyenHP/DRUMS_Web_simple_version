@@ -8,6 +8,7 @@
     "read_timeout_seconds": 90,
     "write_timeout_seconds": 90
   },
+
   "history_trend": {
     "database_path": "database/template.db",
     "table_name": "trend_history",
@@ -17,11 +18,20 @@
     "value_column": "value",
     "unit_column": "unit",
     "default_window_minutes": 240,
-    "default_series": [
-      "line_speed",
-      "motor_current"
-    ]
+    "default_series": ["line_speed", "motor_current"]
   },
+
+  "overview_trend": {
+    "default_window_hours": 24,
+    "max_points_per_series": 350,
+    "timestamp_column": "TimeStamp",
+    "serial_column": "SerialNo",
+    "channel_column": "ChannelDescription",
+    "value_column": "Value",
+    "unit_column": "Unit",
+    "channel_filter_unit_exclude": "On/Off"
+  },
+
   "engine_svg_mappings": {
     "truong_minh": {
       "no1_temp_c": ["No.1 cylinder exhaust gas temp."],
@@ -64,8 +74,30 @@
       "engine_load_ekw": ["ENGINE LOAD"],
       "engine_speed_rpm": ["ENGINE SPEED"],
       "running_hour_h": ["ENGINE RUNNING HOUR"]
+    },
+    "h429_main_engine": {
+      "no1_temp_c": ["NO.1 CYL. EXH. GAS OUTLET TEMP."],
+      "no2_temp_c": ["NO.2 CYL. EXH. GAS OUTLET TEMP."],
+      "no3_temp_c": ["NO.3 CYL. EXH. GAS OUTLET TEMP."],
+      "no4_temp_c": ["NO.4 CYL. EXH. GAS OUTLET TEMP."],
+      "no5_temp_c": ["NO.5 CYL. EXH. GAS OUTLET TEMP."],
+      "no6_temp_c": ["NO.6 CYL. EXH. GAS OUTLET TEMP."],
+      "starting_air_mpa": ["NO.2 START AIR PRESS"],
+      "ex_gas_tc_out_c": ["EXH. GAS T/C OUTLET TEMP"],
+      "ex_gas_tc_in1_c": ["EXH. GAS T/C INLET NO.1 TEMP."],
+      "ex_gas_tc_in2_c": ["EXH. GAS T/C INLET NO.2 TEMP."],
+      "lo_inlet_mpa": ["LUB. OIL PRESS."],
+      "fo_inlet_mpa": ["FUEL OIL PRESS."],
+      "lt_cw_inlet_mpa": [],
+      "ht_cw_inlet_mpa": ["H.T. F.W. PRESS."],
+      "ht_cw_outlet_c": ["H.T. F.W. TEMP."],
+      "lo_inlet_c": ["LUB. OIL TEMP."],
+      "engine_load_ekw": ["LOAD"],
+      "engine_speed_rpm": ["M/E REVOLUTION"],
+      "running_hour_h": []
     }
   },
+
   "vessels": {
     "H429": {
       "label": "H429",
@@ -96,31 +128,11 @@
         "running_hour_h": ["RUNNING HOUR"]
       },
       "engines": [
-        {
-          "key": "DG1",
-          "label": "DG1",
-          "serialNo": "DG1 DE618Z5178"
-        },
-        {
-          "key": "DG2",
-          "label": "DG2",
-          "serialNo": "DG2 DE618Z4812"
-        },
-        {
-          "key": "DG3",
-          "label": "DG3",
-          "serialNo": "DG3 DE618Z4863"
-        },
-        {
-          "key": "PORT",
-          "label": "PORT",
-          "serialNo": "PORT DK636E0039"
-        },
-        {
-          "key": "STBD",
-          "label": "STBD",
-          "serialNo": "STBD DK636E0038"
-        }
+        {"key": "DG1", "label": "DG1", "serialNo": "DG1 DE618Z5178"},
+        {"key": "DG2", "label": "DG2", "serialNo": "DG2 DE618Z4812"},
+        {"key": "DG3", "label": "DG3", "serialNo": "DG3 DE618Z4863"},
+        {"key": "PORT", "label": "PORT", "serialNo": "PORT DK636E0039", "engine_svg_mapping": "h429_main_engine"},
+        {"key": "STBD", "label": "STBD", "serialNo": "STBD DK636E0038", "engine_svg_mapping": "h429_main_engine"}
       ]
     },
     "DB45-01": {
@@ -132,24 +144,12 @@
       "data_table": "silver_truong_minh_dream_05",
       "engine_svg_mapping": "truong_minh",
       "engines": [
-        {
-          "key": "DG1",
-          "label": "DG1",
-          "serialNo": "DG1 DE618Z4641"
-        },
-        {
-          "key": "DG2",
-          "label": "DG2",
-          "serialNo": "DG2 DE618Z4642"
-        },
-        {
-          "key": "DG3",
-          "label": "DG3",
-          "serialNo": "DG3 DE618Z4643"
-        }
+        {"key": "DG1", "label": "DG1", "serialNo": "DG1 DE618Z4641"},
+        {"key": "DG2", "label": "DG2", "serialNo": "DG2 DE618Z4642"},
+        {"key": "DG3", "label": "DG3", "serialNo": "DG3 DE618Z4643"}
       ]
     },
-        "DB66-02": {
+    "DB66-02": {
       "label": "DB66-02",
       "ship_name": "Truong Minh Dream 02",
       "database": "truongminh",
@@ -158,21 +158,9 @@
       "data_table": "silver_truong_minh_dream_02",
       "engine_svg_mapping": "truong_minh",
       "engines": [
-        {
-          "key": "DG1",
-          "label": "DG1",
-          "serialNo": "DG1 DE618Z4585"
-        },
-        {
-          "key": "DG2",
-          "label": "DG2",
-          "serialNo": "DG2 DE618Z4586"
-        },
-        {
-          "key": "DG3",
-          "label": "DG3",
-          "serialNo": "DG3 DE618Z4587"
-        }
+        {"key": "DG1", "label": "DG1", "serialNo": "DG1 DE618Z4585"},
+        {"key": "DG2", "label": "DG2", "serialNo": "DG2 DE618Z4586"},
+        {"key": "DG3", "label": "DG3", "serialNo": "DG3 DE618Z4587"}
       ]
     },
     "Dubai Sky": {
@@ -184,24 +172,12 @@
       "data_table": "silver_dubai_sky",
       "engine_svg_mapping": "emarat",
       "engines": [
-        {
-          "key": "DG1",
-          "label": "DG1",
-          "serialNo": "DG1 DE618Z5340"
-        },
-        {
-          "key": "DG2",
-          "label": "DG2",
-          "serialNo": "DG2 DE618Z5341"
-        },
-        {
-          "key": "DG3",
-          "label": "DG3",
-          "serialNo": "DG3 DE618Z5342"
-        }
+        {"key": "DG1", "label": "DG1", "serialNo": "DG1 DE618Z5340"},
+        {"key": "DG2", "label": "DG2", "serialNo": "DG2 DE618Z5341"},
+        {"key": "DG3", "label": "DG3", "serialNo": "DG3 DE618Z5342"}
       ]
     },
-        "Dubai Eco": {
+    "Dubai Eco": {
       "label": "Dubai Eco",
       "ship_name": "Dubai Eco",
       "database": "emarat_v2",
@@ -210,24 +186,12 @@
       "data_table": "silver_dubai_eco",
       "engine_svg_mapping": "emarat",
       "engines": [
-        {
-          "key": "DG1",
-          "label": "DG1",
-          "serialNo": "DG1 DE618Z5166"
-        },
-        {
-          "key": "DG2",
-          "label": "DG2",
-          "serialNo": "DG2 DE618Z5167"
-        },
-        {
-          "key": "DG3",
-          "label": "DG3",
-          "serialNo": "DG3 DE618Z5168"
-        }
+        {"key": "DG1", "label": "DG1", "serialNo": "DG1 DE618Z5166"},
+        {"key": "DG2", "label": "DG2", "serialNo": "DG2 DE618Z5167"},
+        {"key": "DG3", "label": "DG3", "serialNo": "DG3 DE618Z5168"}
       ]
     },
-        "Dubai World": {
+    "Dubai World": {
       "label": "Dubai World",
       "ship_name": "Dubai World",
       "database": "emarat_v2",
@@ -236,24 +200,12 @@
       "data_table": "silver_dubai_world",
       "engine_svg_mapping": "emarat",
       "engines": [
-        {
-          "key": "DG1",
-          "label": "DG1",
-          "serialNo": "DG1 DE618Z5038"
-        },
-        {
-          "key": "DG2",
-          "label": "DG2",
-          "serialNo": "DG2 DE618Z5039"
-        },
-        {
-          "key": "DG3",
-          "label": "DG3",
-          "serialNo": "DG3 DE618Z5040"
-        }
+        {"key": "DG1", "label": "DG1", "serialNo": "DG1 DE618Z5038"},
+        {"key": "DG2", "label": "DG2", "serialNo": "DG2 DE618Z5039"},
+        {"key": "DG3", "label": "DG3", "serialNo": "DG3 DE618Z5040"}
       ]
     },
-        "Dubai Earth": {
+    "Dubai Earth": {
       "label": "Dubai Earth",
       "ship_name": "Dubai Earth",
       "database": "emarat_v2",
@@ -262,21 +214,9 @@
       "data_table": "silver_dubai_earth",
       "engine_svg_mapping": "emarat",
       "engines": [
-        {
-          "key": "DG1",
-          "label": "DG1",
-          "serialNo": "DG1 DE618Z5246"
-        },
-        {
-          "key": "DG2",
-          "label": "DG2",
-          "serialNo": "DG2 DE618Z5247"
-        },
-        {
-          "key": "DG3",
-          "label": "DG3",
-          "serialNo": "DG3 DE618Z5248"
-        }
+        {"key": "DG1", "label": "DG1", "serialNo": "DG1 DE618Z5246"},
+        {"key": "DG2", "label": "DG2", "serialNo": "DG2 DE618Z5247"},
+        {"key": "DG3", "label": "DG3", "serialNo": "DG3 DE618Z5248"}
       ]
     },
     "Dubai Ocean": {
@@ -288,21 +228,9 @@
       "data_table": "silver_dubai_ocean",
       "engine_svg_mapping": "emarat",
       "engines": [
-        {
-          "key": "DG1",
-          "label": "DG1",
-          "serialNo": "DG1 DE618Z5306"
-        },
-        {
-          "key": "DG2",
-          "label": "DG2",
-          "serialNo": "DG2 DE618Z5307"
-        },
-        {
-          "key": "DG3",
-          "label": "DG3",
-          "serialNo": "DG3 DE618Z5308"
-        }
+        {"key": "DG1", "label": "DG1", "serialNo": "DG1 DE618Z5306"},
+        {"key": "DG2", "label": "DG2", "serialNo": "DG2 DE618Z5307"},
+        {"key": "DG3", "label": "DG3", "serialNo": "DG3 DE618Z5308"}
       ]
     },
     "Dubai Nature": {
@@ -314,32 +242,10 @@
       "data_table": "silver_dubai_nature",
       "engine_svg_mapping": "emarat",
       "engines": [
-        {
-          "key": "DG1",
-          "label": "DG1",
-          "serialNo": "DG1 DE618Z5057"
-        },
-        {
-          "key": "DG2",
-          "label": "DG2",
-          "serialNo": "DG2 DE618Z5058"
-        },
-        {
-          "key": "DG3",
-          "label": "DG3",
-          "serialNo": "DG3 DE618Z5059"
-        }
+        {"key": "DG1", "label": "DG1", "serialNo": "DG1 DE618Z5057"},
+        {"key": "DG2", "label": "DG2", "serialNo": "DG2 DE618Z5058"},
+        {"key": "DG3", "label": "DG3", "serialNo": "DG3 DE618Z5059"}
       ]
     }
-  },
-  "overview_trend": {
-    "default_window_hours": 24,
-    "max_points_per_series": 350,
-    "timestamp_column": "TimeStamp",
-    "serial_column": "SerialNo",
-    "channel_column": "ChannelDescription",
-    "value_column": "Value",
-    "unit_column": "Unit",
-    "channel_filter_unit_exclude": "On/Off"
   }
 }

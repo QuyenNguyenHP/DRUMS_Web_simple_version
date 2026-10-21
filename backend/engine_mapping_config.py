@@ -17,15 +17,31 @@ def resolve_vessel_mappings(config):
 
     for mapping in shared.values():
         validate_mapping(mapping)
+
+    def resolve_mapping(mapping, path):
+        if isinstance(mapping, str):
+            if mapping not in shared:
+                raise ValueError(f"{path}: unknown engine SVG mapping reference.")
+            mapping = shared[mapping]
+        validate_mapping(mapping)
+        return deepcopy(mapping)
+
     vessels = deepcopy(config.get("vessels", {}))
     for name, vessel in vessels.items():
         if not isinstance(vessel, dict):
             raise ValueError(f"vessels.{name} must be an object.")
-        mapping = vessel.get("engine_svg_mapping", {})
-        if isinstance(mapping, str):
-            if mapping not in shared:
-                raise ValueError(f"vessels.{name}: unknown engine SVG mapping reference.")
-            mapping = shared[mapping]
-        validate_mapping(mapping)
-        vessel["engine_svg_mapping"] = deepcopy(mapping)
+        vessel["engine_svg_mapping"] = resolve_mapping(
+            vessel.get("engine_svg_mapping", {}), f"vessels.{name}"
+        )
+        for engine in vessel.get("engines", []):
+            if "engine_svg_mapping" in engine:
+                engine["engine_svg_mapping"] = resolve_mapping(
+                    engine["engine_svg_mapping"],
+                    f"vessels.{name}.engines.{engine.get('key', '')}",
+                )
     return vessels
+
+
+def get_engine_svg_mapping(vessel, engine):
+    """An explicit engine mapping replaces the vessel default, including {}."""
+    return engine.get("engine_svg_mapping", vessel.get("engine_svg_mapping", {}))
