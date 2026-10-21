@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import * as echarts from "echarts";
+import { readTrendValue } from "../services/trendData";
 
 const timeSeriesLineChartPopInKeyframes = `
   @keyframes timeSeriesLineChartPopIn {
@@ -41,7 +42,7 @@ const calculateSeriesAverages = (chartData, series) =>
     }
 
     const numericValues = chartData
-      .map((item) => Number(item?.[seriesItem.dataKey]))
+      .map((item) => readTrendValue(item?.[seriesItem.dataKey]))
       .filter((value) => Number.isFinite(value));
 
     if (numericValues.length === 0) {
@@ -105,7 +106,7 @@ const buildChartOption = ({
 
     normalizedSeries.forEach((seriesItem) => {
       const rawValue = item[seriesItem.dataKey];
-      const numericValue = Number(rawValue);
+      const numericValue = readTrendValue(rawValue);
       point[seriesItem.dataKey] = Number.isFinite(numericValue) ? numericValue : null;
     });
 
@@ -158,7 +159,7 @@ const buildChartOption = ({
         const formattedRows = rows.map((row) => {
           const seriesConfig = seriesLookup[row.seriesName] ?? {};
           const rawValue = row?.value?.[seriesConfig.dataKey];
-          const value = Number(rawValue);
+          const value = readTrendValue(rawValue);
           const precision = Number.isInteger(seriesConfig.precision)
             ? seriesConfig.precision
             : 2;

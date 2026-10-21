@@ -119,6 +119,7 @@ export const fetchOverviewTrend = async ({
   startTime,
   endTime,
   channelDescriptions,
+  signal,
 } = {}) => {
   const url = new URL("/api/overview/trend", window.location.origin);
 
@@ -151,7 +152,7 @@ export const fetchOverviewTrend = async ({
       );
   }
 
-  const response = await fetch(url.pathname + url.search);
+  const response = await fetch(url.pathname + url.search, { signal });
 
   return readJsonOrThrow(
     response,

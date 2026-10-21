@@ -544,15 +544,16 @@ def build_overview_trend_payload(
                       AND {quote_mysql_identifier(MYSQL_CHANNEL_COLUMN)} IN ({channel_placeholders})
                       AND {quote_mysql_identifier(MYSQL_TIMESTAMP_COLUMN)} BETWEEN %s AND %s
                 ),
-                bucket_edges AS (
+                bucket_records AS (
                     SELECT
-                        serialNo,
-                        channelDescription,
-                        bucketId,
-                        MIN(eventTimestamp) AS firstTimestamp,
-                        MAX(eventTimestamp) AS lastTimestamp
+                        filtered_records.*,
+                        MIN(eventTimestamp) OVER (
+                            PARTITION BY serialNo, channelDescription, bucketId
+                        ) AS firstTimestamp,
+                        MAX(eventTimestamp) OVER (
+                            PARTITION BY serialNo, channelDescription, bucketId
+                        ) AS lastTimestamp
                     FROM filtered_records
-                    GROUP BY serialNo, channelDescription, bucketId
                 )
                 SELECT DISTINCT
                     records.serialNo,
@@ -560,15 +561,9 @@ def build_overview_trend_payload(
                     CAST(UNIX_TIMESTAMP(records.eventTimestamp) * 1000 AS SIGNED) AS timestampMs,
                     DATE_FORMAT(records.eventTimestamp, '%%Y-%%m-%%d %%H:%%i:%%s') AS timestampLabel,
                     records.value AS value
-                FROM filtered_records AS records
-                INNER JOIN bucket_edges AS edges
-                    ON edges.serialNo = records.serialNo
-                   AND edges.channelDescription = records.channelDescription
-                   AND edges.bucketId = records.bucketId
-                   AND (
-                        records.eventTimestamp = edges.firstTimestamp
-                     OR records.eventTimestamp = edges.lastTimestamp
-                   )
+                FROM bucket_records AS records
+                WHERE records.eventTimestamp = records.firstTimestamp
+                   OR records.eventTimestamp = records.lastTimestamp
                 ORDER BY timestampMs, records.serialNo, channelDescription
                 """,
                 (

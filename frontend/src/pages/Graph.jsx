@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { buildTrendChartData, normalizeChannelName, trendSeriesKey } from "../services/trendData";
 
 import Footer from "../components/Footer";
 import Header from "../components/Header";
@@ -92,11 +93,6 @@ const getDefaultEngineKeys = (engines = []) => {
     )
   ) ?? engines[0];
   return engine?.key ? [engine.key] : [];
-};
-
-const normalizeChannelName = (value) => {
-  const name = String(value ?? "").trim().replace(/\s+/g, " ").toUpperCase();
-  return name === "LOAD" ? "ENGINE LOAD" : name;
 };
 
 const Graph = ({ user, onLogout }) => {
@@ -302,10 +298,12 @@ const Graph = ({ user, onLogout }) => {
     }
 
     let isActive = true;
+    const controller = new AbortController();
     setIsTrendLoading(true);
     setError("");
 
     fetchOverviewTrend({
+      signal: controller.signal,
       vessel: submittedFilters.vessel,
       serialNumbers: submittedFilters.serialNumbers,
       channelDescriptions: submittedFilters.channelDescriptions,
@@ -338,6 +336,7 @@ const Graph = ({ user, onLogout }) => {
 
     return () => {
       isActive = false;
+      controller.abort();
     };
   }, [activeChartChannels.length, submittedFilters]);
 
@@ -358,7 +357,7 @@ const Graph = ({ user, onLogout }) => {
     return appliedEngines.flatMap((engineOption, engineIndex) =>
       activeChartChannels.map((channelDescription, channelIndex) => ({
         name: `${engineOption.label} - ${channelDescription}`,
-        dataKey: `${engineOption.serialNo}::${channelDescription}`,
+        dataKey: trendSeriesKey(engineOption.serialNo, channelDescription),
         color:
           SERIES_COLORS[
             (engineIndex * Math.max(activeChartChannels.length, 1) + channelIndex) %
@@ -370,33 +369,10 @@ const Graph = ({ user, onLogout }) => {
     );
   }, [activeChartChannels, channelMetadata, submittedFilters]);
 
-  const chartData = useMemo(() => {
-    const rowsByTimestamp = new Map();
-
-    for (const record of Array.isArray(trendPayload?.records) ? trendPayload.records : []) {
-      const timestampMs = Number(record.timestampMs ?? 0);
-      const serialNo = String(record.serialNo ?? "");
-      const channelDescription = String(record.channelDescription ?? "");
-      const dataKey = `${serialNo}::${channelDescription}`;
-
-      if (!Number.isFinite(timestampMs) || !serialNo || !channelDescription) {
-        continue;
-      }
-
-      const row = rowsByTimestamp.get(timestampMs) ?? {
-        timestampLabel: record.timestampLabel,
-        timestampMs,
-      };
-
-      const numericValue = Number(record.value);
-      row[dataKey] = Number.isFinite(numericValue) ? numericValue : null;
-      rowsByTimestamp.set(timestampMs, row);
-    }
-
-    return Array.from(rowsByTimestamp.values()).sort(
-      (leftRow, rightRow) => leftRow.timestampMs - rightRow.timestampMs
-    );
-  }, [trendPayload]);
+  const chartData = useMemo(
+    () => buildTrendChartData(trendPayload?.records),
+    [trendPayload]
+  );
 
   const resetDraftRange = (vesselOption = selectedVesselOption) => {
     const nextRange = buildRangeFromVessel(vesselOption);

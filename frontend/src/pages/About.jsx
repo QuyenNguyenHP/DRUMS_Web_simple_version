@@ -3,6 +3,32 @@ import Header from "../components/Header";
 import NavigationSidebar from "../components/NavigationSidebar";
 import "./About.css";
 
+const aboutIconPaths = {
+  power: "m13 2-9 12h7l-1 8 10-13h-8z",
+  pump: "M16 12a5 5 0 1 1-10 0 5 5 0 0 1 10 0M11 7V3h9v4h-9M6 12H2v5h5M8 20h9M11 17v3m5-8h6",
+  factory: "M3 21V10l6 3V8l6 3V3h4l2 18zM7 17h1m4 0h1m4 0h1",
+  collect: "M12 3v12m-4-4 4 4 4-4M5 15v5h14v-5",
+  store: "M4 4h16v6H4zM4 14h16v6H4zM7 7h1m-1 10h1",
+  chart: "M4 3v17h17M7 14l4-5 4 3 5-7",
+  analyze: "M9 3 7 8l-4 1 3 4-1 5 5-1 3 4 2-5 5-2-4-3 1-5-5 1z",
+  notify: "M6 9a6 6 0 0 1 12 0v5l2 3H4l2-3zM10 21h4",
+  chip: "M6 6h12v12H6zM9 9h6v6H9zM9 3v3m6-3v3M9 18v3m6-3v3M3 9h3m-3 6h3m12-6h3m-3 6h3",
+  network: "M9 3h6v6H9zM3 16h6v5H3zM15 16h6v5h-6zM12 9v4M6 16v-3h12v3",
+  sliders: "M5 3v4m0 4v10M12 3v10m0 4v4M19 3v4m0 4v10M2 7h6v4H2zM9 13h6v4H9zM16 7h6v4h-6z",
+  ship: "M7 12V5h10v7M10 5V2h4v3M3 14l9-4 9 4-3 5H6zM3 22l3-2 3 2 3-2 3 2 3-2 3 2",
+  camera: "M3 7h4l2-3h6l2 3h4v13H3zM16 13a4 4 0 1 1-8 0 4 4 0 0 1 8 0",
+};
+
+function AboutIcon({ name, badge = false }) {
+  return (
+    <span className={badge ? "about-icon about-icon-badge" : "about-icon"} aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" focusable="false">
+        <path d={aboutIconPaths[name]} />
+      </svg>
+    </span>
+  );
+}
+
 const capabilities = [
   ["Collect", "Capture operating data from connected equipment."],
   ["Store", "Retain historical data for review and analysis."],
@@ -11,19 +37,84 @@ const capabilities = [
   ["Notify", "Deliver alerts through configured notification channels."],
 ];
 const engineering = [
-  ["Hardware", [
-    ["CPU Board Design & Assembly", "PCB design and component assembly for the DRUMS CPU board, tailored to the required interfaces and operating environment."],
-    ["Field Panel Engineering", "Panel design, fabrication, wiring, and assembly to connect machinery with reliable field data collection."],
+  ["Hardware Design & Assembly", [
+    ["CPU Board Design & Assembly", "chip"],
+    ["Field Panel Design & Fabrication", "sliders"],
   ]],
-  ["Platform", [
-    ["Data & Server Infrastructure", "Integration of data collection, communications, storage servers, and application servers into a complete monitoring architecture."],
-    ["Monitoring Applications", "Equipment views, dashboards, historical trends, alarm settings, and notification workflows built around operational needs."],
+  ["Equipment Connection & Data Infrastructure", [
+    ["Equipment Integration & Commissioning", "network"],
+    ["Server Deployment & Data Storage", "store"],
   ]],
-  ["Intelligence & integration", [
-    ["Local AI & Equipment Knowledge", "Project-specific local AI integration using technical documentation, operating limits, and relevant data to support equipment-specific analysis."],
-    ["Integration & Commissioning", "Equipment connection, signal verification, system configuration, and commissioning to deliver a working monitoring solution."],
+  ["Monitoring Software & AI", [
+    ["Dashboard Design & Development", "chart"],
+    ["AI-Assisted Analysis, Reporting & Alerts", "analyze"],
   ]],
 ];
+
+const engineeringPhotos = [
+  {
+    folder: "01-hardware-design-assembly",
+    photos: [
+      ["CPU PCB Design.jpg", "CPU PCB design"],
+      ["CPU PCB.jpg", "CPU printed circuit board"],
+      ["A Completed CPU.jpg", "Completed DRUMS CPU board"],
+      ["3D Design DRUMS PANEL.jpg", "DRUMS field panel 3D design"],
+      ["DRUMS Pannel.jpg", "DRUMS field panel"],
+    ],
+  },
+  {
+    folder: "02-equipment-connection-data-infrastructure",
+    photos: [
+      ["Configure data channel.jpg", "Data channel configuration"],
+      ["DRUMS in ECR.jpg", "DRUMS in the engine control room"],
+    ],
+  },
+  {
+    folder: "03-monitoring-software-ai",
+    photos: [
+      ["Dashboard.png", "Equipment monitoring dashboard"],
+      ["Graph Temperature.png", "Temperature trends"],
+    ],
+  },
+];
+
+function EngineeringPhotoGallery({ group, folder, photos }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [file, caption] = photos[activeIndex];
+  const src = `/about/${folder}/${encodeURIComponent(file)}`;
+
+  useEffect(() => {
+    if (!isPlaying || photos.length < 2) return undefined;
+    const timer = window.setTimeout(() => {
+      setActiveIndex((index) => (index + 1) % photos.length);
+    }, 5000);
+    return () => window.clearTimeout(timer);
+  }, [activeIndex, isPlaying, photos.length]);
+
+  return (
+    <div className="about-engineering-photos" role="region" aria-label={`${group} photos`}>
+      <figure>
+        <div className="about-engineering-photo-frame">
+        <a href={src} target="_blank" rel="noopener noreferrer" aria-label={`Open full-size image: ${caption}`}>
+          <img src={src} alt={caption} loading="lazy" width="800" height="600" />
+        </a>
+          <button className="about-photo-arrow about-photo-previous" type="button" aria-label={`Previous ${group} photo`} onClick={() => setActiveIndex((index) => (index - 1 + photos.length) % photos.length)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 5-7 7 7 7" /></svg>
+          </button>
+          <button className="about-photo-arrow about-photo-next" type="button" aria-label={`Next ${group} photo`} onClick={() => setActiveIndex((index) => (index + 1) % photos.length)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 5 7 7-7 7" /></svg>
+          </button>
+          <span className="about-photo-counter">{activeIndex + 1} / {photos.length}</span>
+          <button className="about-photo-playback" type="button" aria-label={`${isPlaying ? "Pause" : "Play"} ${group} slideshow`} title={isPlaying ? "Pause slideshow" : "Play slideshow"} onClick={() => setIsPlaying((playing) => !playing)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">{isPlaying ? <path d="M8 5v14M16 5v14" /> : <path d="m8 5 11 7-11 7z" />}</svg>
+          </button>
+        </div>
+        <figcaption aria-live={isPlaying ? "off" : "polite"}>{caption}</figcaption>
+      </figure>
+    </div>
+  );
+}
 
 const albumPhotos = [
   ["A close view of DRUMS CPU.jpg", "DRUMS CPU", "A close view of the DRUMS onboard processing unit."],
@@ -143,14 +234,14 @@ export default function About({ user, onLogout }) {
 
           <section className="about-section" id="about-overview">
             <div className="about-intro about-intro-wide" data-reveal>
-              <p className="about-eyebrow">01 / The platform</p><h2 className="about-single-line-title">One Platform. From Equipment to Insight.</h2>
+              <p className="about-eyebrow about-icon-label"><AboutIcon name="chip" />01 / The platform</p><h2 className="about-single-line-title">One Platform. From Equipment to Insight.</h2>
             </div>
-            <div className="about-capabilities">{capabilities.map(([title, description], i) => <article key={title}><span className="about-number">0{i + 1}</span><h3>{title}</h3><p>{description}</p></article>)}</div>
+            <div className="about-capabilities">{capabilities.map(([title, description], i) => <article key={title}><div className="about-capability-marker"><AboutIcon name={["collect", "store", "chart", "analyze", "notify"][i]} badge /><span className="about-number">0{i + 1}</span></div><h3>{title}</h3><p>{description}</p></article>)}</div>
           </section>
 
           <section className="about-section about-system" id="about-system">
             <div className="about-intro about-intro-wide" data-reveal>
-              <p className="about-eyebrow">02 / How it works</p>
+              <p className="about-eyebrow about-icon-label"><AboutIcon name="network" />02 / How it works</p>
               <h2 className="about-single-line-title">From Equipment Data to Timely Action</h2>
               <p className="about-single-line-copy">DRUMS connects field equipment with centralized storage and monitoring applications.</p>
               <p className="about-single-line-copy">Operators can review current conditions, explore historical trends, and receive notifications based on configured monitoring logic.</p>
@@ -170,33 +261,97 @@ export default function About({ user, onLogout }) {
           </section>
 
           <section className="about-section about-intelligent" id="about-features">
-            <div className="about-intro about-intro-wide" data-reveal><p className="about-eyebrow">03 / Intelligent monitoring</p><h2 className="about-single-line-title">Equipment Knowledge. More Meaningful Alerts.</h2><p>DRUMS provides configurable monitoring rules and automated notifications. Local AI integration can be developed around equipment documentation, operating limits, and relevant historical data to support contextual analysis.</p><p>AI functions and their deployment scope are defined for each project and verified against the available equipment data.</p></div>
+            <div className="about-intro about-intro-wide" data-reveal><p className="about-eyebrow about-icon-label"><AboutIcon name="analyze" />03 / Intelligent monitoring</p><h2 className="about-single-line-title">Equipment Knowledge. More Meaningful Alerts.</h2><p>DRUMS provides configurable monitoring rules and automated notifications. Local AI integration can be developed around equipment documentation, operating limits, and relevant historical data to support contextual analysis.</p><p>AI functions and their deployment scope are defined for each project and verified against the available equipment data.</p></div>
             <div className="about-benefits"><article><span className="about-number">Defined conditions</span><h3>Rule-Based Monitoring</h3><p>Defined limits and configured conditions trigger alarms and notifications.</p></article><article><span className="about-number">Project-specific integration</span><h3>AI-Assisted Analysis</h3><p>Equipment knowledge and operating data provide context for investigating abnormal conditions.</p></article></div>
             <aside className="about-workflow"><p className="about-eyebrow">Illustrative workflow</p><p>An operating temperature exceeds its configured limit. The monitoring rule raises an alarm. AI-assisted analysis can review relevant trends and equipment documentation to help the operator investigate.</p></aside>
           </section>
 
           <section className="about-section about-engineering" id="about-engineering">
-            <div className="about-intro about-intro-wide" data-reveal><p className="about-eyebrow">04 / End-to-end Engineering</p><h2 className="about-single-line-title">From Board Design to Intelligent Monitoring</h2><p>We engineer the complete monitoring solution around your equipment.</p><p>Daikai designs, builds, and integrates the complete DRUMS solution—from CPU board design and component assembly to field panels, data servers, and monitoring software, with local AI integration tailored to project requirements.</p><p>This control over the technology allows us to customize the hardware, interfaces, dashboards, and monitoring logic for each machine or system.</p></div>
-            <div className="about-engineering-grid">{engineering.map(([group, cards]) => <div key={group}><p className="about-eyebrow">{group}</p>{cards.map(([title, description]) => <article key={title}><h3>{title}</h3><p>{description}</p></article>)}</div>)}</div>
-            <div className="about-photo-strip">
-              {[["cpu-board.webp", "Close-up of the DRUMS circuit board, connectors, and power module", "Designed at board level"], ["panel-interior.webp", "Open DRUMS cabinet with terminal blocks, wiring, and power supplies", "Built for the installation"], ["installation.webp", "DRUMS module and wiring beneath an engine control room console", "Applied in real operating environments"]].map(([file, alt, caption]) => <figure key={file}><img src={`/about/${file}`} alt={alt} loading="lazy" width="800" height="600" /><figcaption>{caption}</figcaption></figure>)}
+            <div className="about-intro about-intro-wide" data-reveal><p className="about-eyebrow about-icon-label"><AboutIcon name="chip" />04 / END-TO-END ENGINEERING</p><h2 className="about-single-line-title">From PCB Design to Intelligent Monitoring</h2></div>
+            <div className="about-engineering-grid">
+              {engineering.map(([group, cards], index) => (
+                <div className="about-engineering-column" key={group}>
+                  <p className="about-eyebrow">{group}</p>
+                  {cards.map(([title, icon]) => (
+                    <article className="about-custom-card" key={title}>
+                      <AboutIcon name={icon} badge />
+                      <h3>{title}</h3>
+                    </article>
+                  ))}
+                  <EngineeringPhotoGallery group={group} {...engineeringPhotos[index]} />
+                </div>
+              ))}
             </div>
           </section>
 
           <section className="about-section about-customization" id="about-customization">
-            <div className="about-intro about-intro-wide" data-reveal><p className="about-eyebrow">05 / Customization</p><h2 className="about-single-line-title">Built Around the Equipment You Operate</h2><p>Every machine has different signals, operating limits, and maintenance requirements. DRUMS can be tailored to an individual asset or a wider monitoring system.</p></div>
-            <ul className="about-custom-list">{["Equipment interfaces and data acquisition requirements.", "Panel layout, hardware configuration, and installation arrangements.", "Data sampling, storage, and communication settings.", "Dashboards, operating trends, and reporting.", "Alarm thresholds, notification rules, and escalation workflows.", "Project-specific AI knowledge and analysis for the monitored equipment."].map(item => <li key={item}>{item}</li>)}</ul>
-            <p className="about-custom-close">The solution starts with your equipment and the information your team needs to operate and maintain it.</p>
+            <div className="about-intro about-intro-wide" data-reveal>
+              <p className="about-eyebrow about-icon-label"><AboutIcon name="sliders" />05 / CUSTOMIZATION</p>
+              <h2>Your Equipment. Your Requirements. Our Engineering.</h2>
+              <p>From hardware to software, we tailor DRUMS to your equipment and operational needs.</p>
+            </div>
+            <div className="about-custom-grid">
+              {[
+                ["network", "Equipment Connections", "Interfaces and signals matched to your machinery."],
+                ["chip", "Hardware & Panels", "Board configuration and panel layout suited to your installation."],
+                ["store", "Data & Storage", "Sampling, communication, and storage tailored to your needs."],
+                ["chart", "Dashboards & Reports", "Equipment views and reports built for your team."],
+                ["notify", "Alarms & Notifications", "Operating limits, alert rules, and notification channels."],
+                ["analyze", "AI & Equipment Knowledge", "AI-assisted analysis tailored to your equipment and documentation."],
+              ].map(([icon, title, description]) => (
+                <article className="about-custom-card" key={title}>
+                  <AboutIcon name={icon} badge />
+                  <h3>{title}</h3>
+                  <p>{description}</p>
+                </article>
+              ))}
+            </div>
           </section>
 
           <section className="about-section about-applications" id="about-applications">
-            <div className="about-intro about-intro-wide" data-reveal><p className="about-eyebrow">06 / Applications</p><h2 className="about-single-line-title">Marine Experience. Wider Industrial Possibilities.</h2><p>Our current installations demonstrate DRUMS in marine operating environments, connecting onboard equipment with centralized data collection and remote monitoring.</p><p>This engineering experience provides a foundation for adapting DRUMS to other machinery and industrial systems, with hardware, interfaces, and monitoring functions selected for each application.</p></div>
-            <div className="about-benefits"><article><span className="about-number">Current experience</span><h3>Marine Installations</h3><p>Explore existing DRUMS installations and the equipment they monitor.</p><a className="about-text-link" href="#about-gallery">View proof in practice →</a><a className="about-text-link" href="#about-records">View supply records →</a></article><article><span className="about-number">Potential applications</span><h3>Adaptable Industrial Applications</h3><ul className="about-applications-list"><li>Engines &amp; Generators</li><li>Pumps &amp; Compressors</li><li>Production Machinery</li><li>Utility &amp; Auxiliary Systems</li></ul><p>Industrial applications are assessed and configured according to equipment interfaces, available signals, and project requirements.</p></article></div>
+            <div className="about-intro about-intro-wide" data-reveal>
+              <p className="about-eyebrow about-icon-label"><AboutIcon name="ship" />06 / APPLICATIONS</p>
+              <h2>Marine Experience. Industrial Potential.</h2>
+              <p>Built on marine monitoring experience, DRUMS can be adapted to other machinery and industrial systems.</p>
+            </div>
+            <div className="about-applications-layout">
+              <article className="about-marine-installations">
+                <p className="about-eyebrow about-application-status">IN OPERATION</p>
+                <h3>Marine Installations</h3>
+                <figure className="about-application-photo">
+                  <img src="/DRUMS%20Album/Dubai%20World%20Vessel.jpg" alt="Dubai World vessel at sunset" loading="lazy" width="2560" height="1920" />
+                </figure>
+                <p>Connecting onboard equipment for centralized data collection and remote monitoring.</p>
+                <div className="about-application-links">
+                  <a className="about-text-link" href="#about-gallery">View Installations <span aria-hidden="true">&rarr;</span></a>
+                  <a className="about-text-link" href="#about-records">View Supply Records <span aria-hidden="true">&rarr;</span></a>
+                </div>
+              </article>
+              <article className="about-industrial-potential">
+                <p className="about-eyebrow about-application-status">POTENTIAL APPLICATIONS</p>
+                <h3>Beyond Marine</h3>
+                <p>Monitoring tailored to different equipment and operating needs.</p>
+                <div className="about-application-grid">
+                  {[
+                    ["power", "Engines & Generators"],
+                    ["pump", "Pumps & Compressors"],
+                    ["factory", "Production Machinery"],
+                    ["sliders", "Utilities & Auxiliary Systems"],
+                  ].map(([icon, category]) => (
+                    <div className="about-custom-card" key={category}>
+                      <AboutIcon name={icon} badge />
+                      <h4>{category}</h4>
+                    </div>
+                  ))}
+                </div>
+                <p className="about-application-note">Configured to suit available signals, equipment interfaces, and project requirements.</p>
+              </article>
+            </div>
           </section>
 
           <section className="about-section about-gallery-section" id="about-gallery">
             <div className="about-intro" data-reveal>
-              <p className="about-eyebrow">07 / Proof in practice</p>
+              <p className="about-eyebrow about-icon-label"><AboutIcon name="camera" />07 / Proof in practice</p>
               <h2>Our Technology in Practice</h2>
               <p>Explore the hardware, installation work, and monitoring interfaces behind DRUMS.</p>
             </div>
@@ -256,9 +411,27 @@ export default function About({ user, onLogout }) {
           </section>
 
           <section className="about-section about-records-section" id="about-records">
-            <div className="about-intro" data-reveal><p className="about-eyebrow">Installation evidence / Supply records</p><h2>DRUMS across fleets</h2><p>Vessel supply records listed in the March 2026 presentation.</p></div>
-            <div className="about-records" data-reveal>{[["Emarat", 6, "emarat-logo.png"], ["Jemla", 1, "jemla-logo.png"], ["Vitol", 4, "vitol-logo.png"], ["Truongminh", 4, "truongminh-logo.png"]].map(([name, count, logo]) => <article key={name}><div className="about-fleet-logo"><img src={`/about/${logo}`} alt={`${name} logo`} loading="lazy" /></div><strong>{count}</strong><h3>{name}</h3><p>{count === 1 ? "vessel" : "vessels"}</p></article>)}</div>
-
+            <div className="about-intro about-intro-wide" data-reveal>
+              <p className="about-eyebrow about-icon-label"><AboutIcon name="ship" />Installation evidence / Supply records</p>
+              <h2>Marine Experience. Across Fleets.</h2>
+              <p>Recorded DRUMS supplies cover 15 vessels across four fleets.</p>
+            </div>
+            <div className="about-records" data-reveal>
+              {[["Emarat", 6, "emarat-logo.png"], ["Jemla", 1, "jemla-logo.png"], ["Vitol", 4, "vitol-logo.png"], ["Truongminh", 4, "truongminh-logo.png"]].map(([name, count, logo]) => (
+                <article className="about-fleet-card" key={name}>
+                  <div className="about-fleet-logo"><img src={`/about/${logo}`} alt={`${name} logo`} loading="lazy" /></div>
+                  <h3>{name}</h3>
+                  <div className="about-fleet-count">
+                    <AboutIcon name="ship" badge />
+                    <p><strong>{count}</strong><span>{count === 1 ? "vessel supplied" : "vessels supplied"}</span></p>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <div className="about-records-footer">
+              <p>Source: DRUMS presentation V7 · 3 March 2026.</p>
+              <a className="about-text-link" href="#about-gallery">View Installations <span aria-hidden="true">→</span></a>
+            </div>
           </section>
           <section className="about-section about-contact" id="about-contact">
             <p className="about-eyebrow">Your equipment. Your requirements.</p><h2>Let's Build the Monitoring System Your Equipment Needs</h2><p>Tell us about your machinery, available signals, and monitoring requirements. We can discuss a DRUMS solution tailored to your application.</p><div className="about-actions"><a className="about-button about-button-secondary" href="#about-gallery">View Proof in Practice</a></div>
