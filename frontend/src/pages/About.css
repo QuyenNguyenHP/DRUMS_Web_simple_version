@@ -64,6 +64,10 @@
 .about-features span { color: #67d8ec; font-size: 11px; }
 .about-features h3 { margin: 0; font-size: 16px; }
 .about-gallery-section { background: #081523; }
+.about-gallery-filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+.about-gallery-filters button { display: flex; align-items: center; gap: 9px; min-height: 44px; padding: 10px 14px; border: 1px solid #2d4255; border-radius: 8px; background: #0c1b2c; color: #b4cadb; font-size: 12px; cursor: pointer; }
+.about-gallery-filters button[aria-pressed="true"] { border-color: #8ae5ef; background: #16394b; color: #eefaff; }
+.about-gallery-filter-count { padding: 2px 6px; border-radius: 4px; background: #07111f; font-size: 11px; }
 .about-records-section { background: #0c1b2c; }
 .about-gallery { outline: none; }
 .about-gallery:focus-visible { border-radius: 10px; outline: 3px solid #67e8f9; outline-offset: 6px; }
@@ -141,6 +145,25 @@
 .about-photo-strip img { width: 100%; height: 260px; object-fit: contain; background: #040e18; border-radius: 8px; }
 .about-photo-strip figcaption, .about-system-diagram figcaption { color: #b4cadb; font-size: 13px; line-height: 1.7; padding-top: 14px; }
 .about-system-diagram { margin: 0; }
+.about-system-stage { padding: clamp(20px, 3vw, 32px); border: 1px solid #2d4255; border-radius: 14px; background: #07111f; }
+.about-field-flow { display: grid; grid-template-columns: minmax(0, 1fr) 140px minmax(0, 1fr); align-items: stretch; gap: 20px; }
+.about-system-node { padding: 24px; border: 1px solid #2d4255; border-radius: 12px; background: #0c1b2c; }
+.about-system-node h3 { margin: 18px 0 0; line-height: 1.5; }
+.about-system-connector, .about-system-transfer { display: flex; align-items: center; justify-content: center; gap: 10px; color: #8ae5ef; font-size: 12px; text-align: center; }
+.about-system-connector { flex-direction: column; }
+.about-flow-direction, .about-system-transfer > span:first-child { font-size: 28px; line-height: 1; }
+.about-system-transfer { padding: 22px 0; }
+.about-system .about-system-caption { margin: 20px 0 0; font-size: 13px; text-align: center; }
+.about-system-storage { display: flex; justify-content: center; align-items: center; gap: 16px; max-width: 460px; margin: auto; padding: 20px; border: 1px solid #436779; border-radius: 12px; background: #112c3e; }
+.about-system-storage h3 { margin: 0; }
+.about-system-functions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.about-system .about-system-function-label { margin: 18px 0 8px; color: #67d8ec; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.about-system-functions h3 { margin-top: 0; line-height: 1.4; }
+.about-system .about-system-functions article > p:not(.about-system-function-label) { font-size: 14px; line-height: 1.7; }
+.about-system-knowledge { display: flex; align-items: center; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px dashed #436779; font-size: 12px; line-height: 1.6; color: #b4cadb; }
+.about-system .about-system-functions .about-system-ai-note { font-size: 12px; color: #9ab0c2; margin-bottom: 0; }
+@media (max-width: 1100px) { .about-system-functions { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .about-field-flow { grid-template-columns: 1fr; gap: 16px; } .about-system-connector { flex-direction: row; } .about-flow-direction { transform: rotate(90deg); } .about-system-transfer { align-items: center; padding: 20px 8px; } }
 .about-diagram-area { border: 1px solid #36566d; border-radius: 12px; padding: clamp(16px, 3vw, 32px); }
 .about-diagram-area > .about-node { max-width: 540px; margin: auto; }
 .about-diagram-area > p:not(.about-eyebrow) { text-align: center; }
@@ -156,8 +179,20 @@
 .about-customization .about-custom-card p { margin: 0; font-size: 14px; line-height: 1.6; text-wrap: pretty; }
 @media (min-width: 761px) and (max-width: 1200px) { .about-custom-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 760px) { .about-custom-grid { grid-template-columns: 1fr; } }
-.about-workflow { border-left: 3px solid #8ae5ef; padding: 20px 28px; margin-top: 38px; background: #11283a; }
-.about-workflow .about-eyebrow { margin-bottom: 8px; }
+.about-monitoring-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.about-intelligent .about-monitoring-label { margin: 18px 0 8px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #67d8ec; }
+.about-monitoring-grid .about-custom-card h3 { margin-top: 0; }
+.about-monitoring-grid .about-custom-card > p:last-child { margin-bottom: 0; }
+.about-intelligent .about-monitoring-scope { margin: 20px 0 0; font-size: 13px; max-width: 920px; }
+.about-monitoring-workflow { margin-top: 36px; padding: clamp(20px, 3vw, 32px); border: 1px solid #2d4255; border-radius: 14px; background: #0c1b2c; }
+.about-monitoring-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; margin: 0; padding: 0; list-style: none; }
+.about-monitoring-steps li { position: relative; min-width: 0; padding: 22px; border: 1px solid #2d4255; border-radius: 12px; background: #07111f; }
+.about-monitoring-steps li:not(:last-child)::after { content: "\2192"; position: absolute; top: 32px; right: -25px; color: #8ae5ef; font-size: 22px; }
+.about-monitoring-step-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.about-monitoring-steps h3 { margin: 18px 0 10px; line-height: 1.4; }
+.about-intelligent .about-monitoring-steps p { margin: 0; font-size: 14px; line-height: 1.7; }
+@media (max-width: 1100px) { .about-monitoring-steps { grid-template-columns: 1fr; } .about-monitoring-steps li:not(:last-child)::after { content: "\2193"; top: auto; bottom: -30px; right: 50%; transform: translateX(50%); } }
+@media (max-width: 760px) { .about-monitoring-grid { grid-template-columns: 1fr; } }
 .about-text-link { display: block; color: #8ae5ef; padding: 12px 0; width: fit-content; }
 .about-applications-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px; }
 .about-applications-layout > article { min-width: 0; }

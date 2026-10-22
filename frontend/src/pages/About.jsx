@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Header from "../components/Header";
 import NavigationSidebar from "../components/NavigationSidebar";
 import "./About.css";
@@ -116,6 +116,20 @@ function EngineeringPhotoGallery({ group, folder, photos }) {
   );
 }
 
+const albumCategories = [
+  ["all", "All Photos", "camera"],
+  ["installations", "Vessels & Installations", "ship"],
+  ["commissioning", "Commissioning", "sliders"],
+  ["hardware", "Hardware & Testing", "chip"],
+  ["operations", "Monitoring & Fieldwork", "chart"],
+];
+
+const albumCategoryFiles = {
+  hardware: ["A close view of DRUMS CPU.jpg", "DRUMS Testing.jpg", "DRUMS QC Inspection.jpg", "DRUMS Box.jpg", "ECU.jpg"],
+  commissioning: ["Carrying out DRUMS commissioning for DB45-02 Vietnam.jpg", "Configure data channel.jpg", "Doing DRUMS Commissioning.jpg", "DRUMS Commisioning Comletetion.jpg", "DRUMS DB6602 Commissioning 2.jpg", "Shanaya Ferry - DRUMS Commissioning - Batam Indonesia.jpg"],
+  operations: ["DRUMS Presentation in IT Dept Room.jpg", "Bunkering operations on Dubai Sky.jpg", "DRUMS in ECR.jpg", "DRUMS Operation.jpg", "Using a rope ladder to climb from the boat onto the vessel..jpg", "View of the Singapore anchorage at dawn.jpg"],
+};
+
 const albumPhotos = [
   ["A close view of DRUMS CPU.jpg", "DRUMS CPU", "A close view of the DRUMS onboard processing unit."],
   ["DRUMS Testing.jpg", "System testing", "Testing the DRUMS system and connected equipment."],
@@ -157,20 +171,26 @@ const albumPhotos = [
   file,
   title,
   description,
+  category: Object.entries(albumCategoryFiles).find(([, files]) => files.includes(file))?.[0] ?? "installations",
   src: `/DRUMS%20Album/${encodeURIComponent(file)}`,
-}));
+})).sort((a, b) => albumCategories.findIndex(([id]) => id === a.category) - albumCategories.findIndex(([id]) => id === b.category));
 
 export default function About({ user, onLogout }) {
   const page = useRef(null);
+  const [activeCategory, setActiveCategory] = useState("all");
+  const visiblePhotos = useMemo(
+    () => activeCategory === "all" ? albumPhotos : albumPhotos.filter((photo) => photo.category === activeCategory),
+    [activeCategory]
+  );
   const [activePhoto, setActivePhoto] = useState(0);
   const [isAlbumPlaying, setIsAlbumPlaying] = useState(false);
 
   const showPreviousPhoto = () => {
-    setActivePhoto((current) => (current - 1 + albumPhotos.length) % albumPhotos.length);
+    setActivePhoto((current) => (current - 1 + visiblePhotos.length) % visiblePhotos.length);
   };
 
   const showNextPhoto = () => {
-    setActivePhoto((current) => (current + 1) % albumPhotos.length);
+    setActivePhoto((current) => (current + 1) % visiblePhotos.length);
   };
 
   useEffect(() => {
@@ -178,7 +198,7 @@ export default function About({ user, onLogout }) {
     if (!isAlbumPlaying || reducedMotion.matches) return undefined;
     const interval = window.setInterval(showNextPhoto, 5000);
     return () => window.clearInterval(interval);
-  }, [isAlbumPlaying]);
+  }, [isAlbumPlaying, visiblePhotos.length, activeCategory]);
 
   useEffect(() => {
     const elements = page.current.querySelectorAll("[data-reveal]");
@@ -242,18 +262,46 @@ export default function About({ user, onLogout }) {
           <section className="about-section about-system" id="about-system">
             <div className="about-intro about-intro-wide" data-reveal>
               <p className="about-eyebrow about-icon-label"><AboutIcon name="network" />02 / How it works</p>
-              <h2 className="about-single-line-title">From Equipment Data to Timely Action</h2>
-              <p className="about-single-line-copy">DRUMS connects field equipment with centralized storage and monitoring applications.</p>
-              <p className="about-single-line-copy">Operators can review current conditions, explore historical trends, and receive notifications based on configured monitoring logic.</p>
+              <h2 className="about-system-title">From Equipment Data to Timely Action</h2>
+              <p className="about-system-intro-copy">DRUMS connects field equipment with centralized storage and monitoring applications.</p>
+              <p className="about-system-intro-copy">Operators can review current conditions, explore historical trends, and receive notifications based on configured monitoring logic.</p>
             </div>
-            <figure className="about-system-diagram" aria-label="Data flows from equipment through the field panel to server storage. Stored data feeds dashboards, monitoring rules, and project-specific AI analysis. Rules generate notifications for operators; AI supports investigation.">
-              <div className="about-diagram-area"><p className="about-eyebrow">At the equipment / Field</p><div className="about-node">Machinery &amp; Existing Control Systems</div><div className="about-arrow">↓ <span>Operating signals</span></div><div className="about-node">DRUMS Field Panel</div><p>The panel connects to the machine or existing control system and collects the required signals.</p></div>
-              <div className="about-arrow">↓ <span>Collected data · network connection</span></div>
-              <div className="about-diagram-area"><p className="about-eyebrow">At the server / Applications</p><div className="about-node">Data Storage</div><div className="about-arrow">↓ <span>Stored operating data feeds each function</span></div>
-                <div className="about-diagram-branches">
-                  <div><div className="about-node">Monitoring Application</div><div className="about-arrow" aria-hidden="true">↓</div><div className="about-node">Dashboards &amp; Trends</div><p>Current conditions and historical records for operators.</p></div>
-                  <div><div className="about-node">Monitoring Rules</div><div className="about-arrow" aria-hidden="true">↓</div><div className="about-node">Alerts &amp; Notifications</div><p>Configured channels deliver alerts to operators.</p></div>
-                  <div className="about-ai-branch"><div className="about-node">Local AI Analysis</div><div className="about-arrow">↑ <span>Informed by</span></div><div className="about-node">Equipment Knowledge</div><p>Documentation, limits, and relevant data support contextual investigation. AI notification scope is defined per project.</p></div>
+            <figure className="about-system-diagram" aria-label="Equipment signals flow through the DRUMS field panel to data storage, then feed monitoring applications, monitoring rules, and local AI analysis. Equipment knowledge also informs AI analysis.">
+              <div className="about-system-stage">
+                <p className="about-eyebrow about-icon-label"><AboutIcon name="network" />At the equipment / Field</p>
+                <div className="about-field-flow">
+                  <div className="about-system-node"><AboutIcon name="factory" badge /><h3>Machinery &amp; Existing Control Systems</h3></div>
+                  <div className="about-system-connector"><span aria-hidden="true" className="about-flow-direction">&rarr;</span><span>Operating signals</span></div>
+                  <div className="about-system-node"><AboutIcon name="chip" badge /><h3>DRUMS Field Panel</h3></div>
+                </div>
+                <p className="about-system-caption">The panel connects to the machine or existing control system and collects the required signals.</p>
+              </div>
+              <div className="about-system-transfer"><span aria-hidden="true">&darr;</span><span>Collected data &middot; network connection</span></div>
+              <div className="about-system-stage">
+                <p className="about-eyebrow about-icon-label"><AboutIcon name="store" />At the server / Applications</p>
+                <div className="about-system-storage"><AboutIcon name="store" badge /><h3>Data Storage</h3></div>
+                <div className="about-system-transfer"><span aria-hidden="true">&darr;</span><span>Stored operating data feeds each function</span></div>
+                <div className="about-system-functions">
+                  <article className="about-custom-card">
+                    <AboutIcon name="chart" badge />
+                    <p className="about-system-function-label">Monitoring Application</p>
+                    <h3>Dashboards &amp; Trends</h3>
+                    <p>Current conditions and historical records for operators.</p>
+                  </article>
+                  <article className="about-custom-card">
+                    <AboutIcon name="notify" badge />
+                    <p className="about-system-function-label">Monitoring Rules</p>
+                    <h3>Alerts &amp; Notifications</h3>
+                    <p>Configured channels deliver alerts to operators.</p>
+                  </article>
+                  <article className="about-custom-card about-system-ai">
+                    <AboutIcon name="analyze" badge />
+                    <p className="about-system-function-label">Equipment Knowledge</p>
+                    <h3>Local AI Analysis</h3>
+                    <p>Documentation, limits, and relevant data support contextual investigation.</p>
+                    <div className="about-system-knowledge"><AboutIcon name="collect" /><span>Informed by equipment knowledge</span></div>
+                    <p className="about-system-ai-note">AI notification scope is defined per project.</p>
+                  </article>
                 </div>
               </div>
               <figcaption>Illustrative system architecture. Configuration depends on the equipment and project requirements. These are logical functions, not separate physical servers.</figcaption>
@@ -261,9 +309,42 @@ export default function About({ user, onLogout }) {
           </section>
 
           <section className="about-section about-intelligent" id="about-features">
-            <div className="about-intro about-intro-wide" data-reveal><p className="about-eyebrow about-icon-label"><AboutIcon name="analyze" />03 / Intelligent monitoring</p><h2 className="about-single-line-title">Equipment Knowledge. More Meaningful Alerts.</h2><p>DRUMS provides configurable monitoring rules and automated notifications. Local AI integration can be developed around equipment documentation, operating limits, and relevant historical data to support contextual analysis.</p><p>AI functions and their deployment scope are defined for each project and verified against the available equipment data.</p></div>
-            <div className="about-benefits"><article><span className="about-number">Defined conditions</span><h3>Rule-Based Monitoring</h3><p>Defined limits and configured conditions trigger alarms and notifications.</p></article><article><span className="about-number">Project-specific integration</span><h3>AI-Assisted Analysis</h3><p>Equipment knowledge and operating data provide context for investigating abnormal conditions.</p></article></div>
-            <aside className="about-workflow"><p className="about-eyebrow">Illustrative workflow</p><p>An operating temperature exceeds its configured limit. The monitoring rule raises an alarm. AI-assisted analysis can review relevant trends and equipment documentation to help the operator investigate.</p></aside>
+            <div className="about-intro about-intro-wide" data-reveal>
+              <p className="about-eyebrow about-icon-label"><AboutIcon name="analyze" />03 / INTELLIGENT MONITORING</p>
+              <h2>Equipment Knowledge. More Meaningful Alerts.</h2>
+              <p>DRUMS provides configurable monitoring rules and automated notifications. Local AI integration can be developed around equipment documentation, operating limits, and relevant historical data to support contextual analysis.</p>
+            </div>
+            <div className="about-monitoring-grid">
+              <article className="about-custom-card">
+                <AboutIcon name="notify" badge />
+                <p className="about-monitoring-label">Defined conditions</p>
+                <h3>Rule-Based Monitoring</h3>
+                <p>Defined limits and configured conditions trigger alarms and notifications.</p>
+              </article>
+              <article className="about-custom-card">
+                <AboutIcon name="analyze" badge />
+                <p className="about-monitoring-label">Project-specific integration</p>
+                <h3>AI-Assisted Analysis</h3>
+                <p>Equipment knowledge and operating data provide context for investigating abnormal conditions.</p>
+              </article>
+            </div>
+            <p className="about-monitoring-scope">AI functions and their deployment scope are defined for each project and verified against the available equipment data.</p>
+            <aside className="about-monitoring-workflow" aria-labelledby="about-monitoring-workflow-title">
+              <p className="about-eyebrow about-icon-label" id="about-monitoring-workflow-title"><AboutIcon name="network" />Illustrative workflow</p>
+              <ol className="about-monitoring-steps">
+                {[
+                  ["chart", "01", "Limit exceeded", "An operating temperature exceeds its configured limit."],
+                  ["notify", "02", "Alarm raised", "The monitoring rule raises an alarm."],
+                  ["analyze", "03", "Investigation supported", "AI-assisted analysis can review relevant trends and equipment documentation to help the operator investigate."],
+                ].map(([icon, number, title, description]) => (
+                  <li key={number}>
+                    <div className="about-monitoring-step-heading"><AboutIcon name={icon} badge /><span className="about-number">{number}</span></div>
+                    <h3>{title}</h3>
+                    <p>{description}</p>
+                  </li>
+                ))}
+              </ol>
+            </aside>
           </section>
 
           <section className="about-section about-engineering" id="about-engineering">
@@ -353,23 +434,31 @@ export default function About({ user, onLogout }) {
             <div className="about-intro" data-reveal>
               <p className="about-eyebrow about-icon-label"><AboutIcon name="camera" />07 / Proof in practice</p>
               <h2>Our Technology in Practice</h2>
-              <p>Explore the hardware, installation work, and monitoring interfaces behind DRUMS.</p>
+              <p>Explore DRUMS across vessels, installation work, commissioning, and everyday monitoring.</p>
+            </div>
+            <div className="about-gallery-filters" role="group" aria-label="Filter gallery photos">
+              {albumCategories.map(([id, label, icon]) => (
+                <button type="button" key={id} aria-pressed={activeCategory === id} onClick={() => { setActiveCategory(id); setActivePhoto(0); }}>
+                  <AboutIcon name={icon} /><span>{label}</span>
+                  <span className="about-gallery-filter-count">{id === "all" ? albumPhotos.length : albumPhotos.filter((photo) => photo.category === id).length}</span>
+                </button>
+              ))}
             </div>
             <div
               className="about-gallery"
               data-reveal
               tabIndex={0}
               onKeyDown={(event) => {
-                if (event.key === "ArrowLeft") showPreviousPhoto();
-                if (event.key === "ArrowRight") showNextPhoto();
+                if (event.key === "ArrowLeft") { event.preventDefault(); showPreviousPhoto(); }
+                if (event.key === "ArrowRight") { event.preventDefault(); showNextPhoto(); }
               }}
               aria-label="DRUMS photo slideshow. Use the left and right arrow keys to change photos."
             >
               <div className="about-gallery-stage">
                 <img
-                  key={albumPhotos[activePhoto].file}
-                  src={albumPhotos[activePhoto].src}
-                  alt={albumPhotos[activePhoto].description}
+                  key={visiblePhotos[activePhoto].file}
+                  src={visiblePhotos[activePhoto].src}
+                  alt={visiblePhotos[activePhoto].description}
                   className="about-gallery-image"
                   loading="lazy"
                   decoding="async"
@@ -377,9 +466,9 @@ export default function About({ user, onLogout }) {
                 </div>
               <div className="about-gallery-details">
                 <div className="about-gallery-caption" aria-live={isAlbumPlaying ? "off" : "polite"}>
-                  <span>{String(activePhoto + 1).padStart(2, "0")} / {String(albumPhotos.length).padStart(2, "0")}</span>
-                  <h3>{albumPhotos[activePhoto].title}</h3>
-                  <p>{albumPhotos[activePhoto].description}</p>
+                  <span>{String(activePhoto + 1).padStart(2, "0")} / {String(visiblePhotos.length).padStart(2, "0")}</span>
+                  <h3>{visiblePhotos[activePhoto].title}</h3>
+                  <p>{visiblePhotos[activePhoto].description}</p>
                 </div>
                 <div className="about-gallery-controls">
                   <button type="button" onClick={showPreviousPhoto} aria-label="Previous photo">←</button>
@@ -393,20 +482,7 @@ export default function About({ user, onLogout }) {
                   <button type="button" onClick={showNextPhoto} aria-label="Next photo">→</button>
                 </div>
               </div>
-              <div className="about-gallery-thumbnails" aria-label="Choose a photo">
-                {albumPhotos.map((photo, index) => (
-                  <button
-                    type="button"
-                    className={index === activePhoto ? "is-active" : ""}
-                    key={photo.file}
-                    onClick={() => setActivePhoto(index)}
-                    aria-label={`Show ${photo.title}`}
-                    aria-current={index === activePhoto ? "true" : undefined}
-                  >
-                    <img src={photo.src} alt="" loading="lazy" decoding="async" />
-                  </button>
-                ))}
-              </div>
+
             </div>
           </section>
 

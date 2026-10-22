@@ -1,5 +1,5 @@
 export const FLEET_POLL_MS = 10000;
-export const STALE_AFTER_MS = 30 * 60 * 1000;
+export const STALE_AFTER_MS = 40 * 60 * 1000;
 
 export const engineId = (vessel, engine) => JSON.stringify([vessel, engine]);
 

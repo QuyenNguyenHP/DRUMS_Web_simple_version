@@ -85,7 +85,7 @@ export default function Overview({ user, onLogout }) {
             <div><strong>{engineCount}</strong><span>Engines</span></div>
             <div><strong>{available}<small> / {engineCount}</small></strong><span>Load readings available</span></div>
           </div>
-          <p className="fleet-note">Load is shown in ekW. Data older than 30 minutes is marked stale. Requests refresh 10 seconds after each completed cycle.</p>
+          <p className="fleet-note">Load is shown in ekW. Data older than 40 minutes is marked stale. Requests refresh 10 seconds after each completed cycle.</p>
           {loading && <p className="fleet-message" role="status">Loading vessels...</p>}
           {error && <div className="fleet-message fleet-error" role="alert">{error} <button type="button" onClick={() => setRetry((value) => value + 1)}>Try again</button></div>}
           {!loading && !error && vessels.length === 0 && <p className="fleet-message">No vessels configured.</p>}
