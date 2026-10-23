@@ -234,6 +234,16 @@ def build_engine_payload(vessel: str, engine_key: str) -> dict[str, Any]:
         "page": "engine",
         "values": values,
         "records": snapshot_rows,
+        "channels": {
+            element_id: {
+                "channelDescription": row["channelDescription"],
+                "unit": row.get("unit", ""),
+            }
+            for row in snapshot_rows
+            if (element_id := engine_binding_lookup.get(
+                normalize_engine_channel_name(row.get("channelDescription", ""))
+            ))
+        },
         "meta": {
             "pollIntervalMs": 2000,
             "vessel": {

@@ -5,6 +5,7 @@ import Footer from "../components/Footer";
 import Header from "../components/Header";
 import NavigationSidebar from "../components/NavigationSidebar";
 import VesselEngineSelector from "../components/VesselEngineSelector";
+import EngineTrendChart from "../components/EngineTrendChart";
 import { fetchVesselConfig } from "../services/apiClient";
 import { fetchEngineMonitorData } from "../services/pidMonitorApi";
 
@@ -25,7 +26,7 @@ const SVG_SOURCE = "/Engine_indicator.svg";
 // { elementId: "temperature-value", dataKey: "temperature", unit: " °C", digits: 1 }
 const getValues = (payload) => payload?.values ?? payload?.data ?? {};
 
-const renderSvgValues = (markup, payload) => {
+const renderSvgValues = (markup, payload, selectedElementId) => {
   if (!markup) {
     return "";
   }
@@ -48,6 +49,30 @@ const renderSvgValues = (markup, payload) => {
     element.setAttribute("data-value", nextValue);
   });
 
+  Object.entries(payload?.channels ?? {}).forEach(([elementId, channel]) => {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    const hitArea = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+    const large = Number(element.getAttribute("font-size")) > 30;
+    hitArea.setAttribute("x", Number(element.getAttribute("x")) - (large ? 130 : 42));
+    hitArea.setAttribute("y", Number(element.getAttribute("y")) - (large ? 38 : 20));
+    hitArea.setAttribute("width", large ? "260" : "84");
+    hitArea.setAttribute("height", large ? "76" : "40");
+    hitArea.setAttribute("rx", "6");
+    hitArea.setAttribute("fill", "transparent");
+    hitArea.setAttribute("stroke", "none");
+    hitArea.setAttribute("data-channel-id", elementId);
+    hitArea.setAttribute("role", "button");
+    hitArea.setAttribute("tabindex", "0");
+    hitArea.setAttribute("aria-label", `View history: ${channel.channelDescription}`);
+    hitArea.setAttribute("aria-pressed", String(elementId === selectedElementId));
+    hitArea.setAttribute("style", "cursor: pointer;");
+    const title = document.createElementNS("http://www.w3.org/2000/svg", "title");
+    title.textContent = `View history: ${channel.channelDescription}`;
+    hitArea.appendChild(title);
+    element.parentNode.appendChild(hitArea);
+  });
+
   return new XMLSerializer().serializeToString(document.documentElement);
 };
 
@@ -65,6 +90,16 @@ const EnginePage = ({ user, onLogout }) => {
   const [selectedVessel, setSelectedVessel] = useState("");
   const [selectedEngine, setSelectedEngine] = useState("");
   const [vesselError, setVesselError] = useState("");
+  const [selectedElementId, setSelectedElementId] = useState("");
+  const currentPayload = payload?.meta?.vessel?.key === selectedVessel &&
+    payload?.meta?.engine?.key === selectedEngine ? payload : null;
+  const selectedChannel = currentPayload?.channels?.[selectedElementId];
+  const selectDiagramChannel = (event) => {
+    const elementId = event.target.closest("[data-channel-id]")?.getAttribute("data-channel-id");
+    if (currentPayload?.channels?.[elementId]) setSelectedElementId(elementId);
+  };
+
+  useEffect(() => { setSelectedElementId(""); }, [selectedVessel, selectedEngine]);
 
   const selectedVesselOption =
     vesselOptions.find((option) => option.value === selectedVessel) ?? vesselOptions[0] ?? null;
@@ -82,8 +117,8 @@ const EnginePage = ({ user, onLogout }) => {
     ? payload.meta.unmatchedChannels
     : [];
   const renderedSvgMarkup = useMemo(
-    () => renderSvgValues(svgMarkup, payload),
-    [payload, svgMarkup]
+    () => renderSvgValues(svgMarkup, currentPayload, selectedElementId),
+    [currentPayload, svgMarkup, selectedElementId]
   );
 
   useEffect(() => {
@@ -221,7 +256,7 @@ const EnginePage = ({ user, onLogout }) => {
 
         <section className="flex-1 min-w-0 p-3 lg:p-5">
           <div
-            className="relative flex h-full min-h-[420px] flex-col items-center justify-start overflow-auto rounded-lg border border-slate-700 bg-slate-800/90 px-3 py-4 lg:min-h-[calc(100vh-116px)] lg:justify-center lg:px-0 lg:py-0"
+            className="relative flex min-h-[420px] flex-col items-center justify-start overflow-auto rounded-lg border border-slate-700 bg-slate-800/90 px-3 py-4 lg:min-h-[calc(100vh-116px)] lg:justify-center lg:px-0 lg:py-0"
           >
             <div className="z-20 w-full lg:absolute lg:left-4 lg:right-4 lg:top-4 lg:w-auto">
               <div className="grid items-end justify-start gap-3 lg:grid-cols-[minmax(420px,500px)_500px]">
@@ -293,8 +328,15 @@ const EnginePage = ({ user, onLogout }) => {
                     className="pointer-events-none absolute inset-0 block h-full w-full select-none"
                   />
                   <div
-                    role="img"
+                    role="group"
                     aria-label="Engine monitoring diagram"
+                    onClick={selectDiagramChannel}
+                    onKeyDown={(event) => {
+                      if ((event.key === "Enter" || event.key === " ") && event.target.closest("[data-channel-id]")) {
+                        event.preventDefault();
+                        selectDiagramChannel(event);
+                      }
+                    }}
                     className="absolute inset-0 [&>svg]:block [&>svg]:h-full [&>svg]:w-full"
                     dangerouslySetInnerHTML={{ __html: renderedSvgMarkup }}
                   />
@@ -319,6 +361,13 @@ const EnginePage = ({ user, onLogout }) => {
               </div>
             )}
           </div>
+          <EngineTrendChart
+            key={`${selectedVessel}:${selectedEngine}:${Boolean(currentPayload)}`}
+            vessel={selectedVessel}
+            serialNo={selectedEngineOption?.serialNo}
+            channel={selectedChannel}
+            latestTimestampMs={currentPayload?.meta?.latestTimestampMs}
+          />
         </section>
       </main>
 

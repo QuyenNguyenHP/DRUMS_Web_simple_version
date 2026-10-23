@@ -21,6 +21,7 @@ const timeSeriesLineChartPopInKeyframes = `
 `;
 
 const defaultSeriesColors = ["#22c55e", "#38bdf8", "#f97316", "#e879f9", "#facc15", "#fb7185"];
+const defaultYAxes = [];
 
 const pad = (value) => String(value).padStart(2, "0");
 
@@ -133,9 +134,9 @@ const buildChartOption = ({
     },
     grid: {
       top: 42,
-      right: resolvedYAxes.length > 1 ? 64 : 28,
+      right: resolvedYAxes.length > 1 ? 64 + Math.max(0, ...resolvedYAxes.filter((axis) => axis.position === "right").map((axis) => axis.offset ?? 0)) : 28,
       bottom: 28,
-      left: resolvedYAxes.length > 1 ? 64 : 58,
+      left: (resolvedYAxes.length > 1 ? 64 : 58) + Math.max(0, ...resolvedYAxes.filter((axis) => axis.position === "left").map((axis) => axis.offset ?? 0)),
     },
     tooltip: {
       trigger: "axis",
@@ -207,6 +208,7 @@ const buildChartOption = ({
       type: "value",
       name: axisConfig?.name ?? "",
       position: axisConfig?.position ?? (axisIndex === 0 ? "left" : "right"),
+      offset: axisConfig?.offset ?? 0,
       nameTextStyle: {
         color: "#94a3b8",
         padding:
@@ -294,12 +296,13 @@ const TimeSeriesLineChart = ({
   subtitle = "",
   emptyMessage = "No data returned for the selected window.",
   yAxisName = "",
-  yAxes = [],
+  yAxes = defaultYAxes,
 }) => {
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
   const resizeObserverRef = useRef(null);
   const hasLoggedChartErrorRef = useRef(false);
+  const zoomContextRef = useRef(null);
   const [isAverageVisible, setIsAverageVisible] = useState(true);
 
   const handleDownload = () => {
@@ -355,8 +358,11 @@ const TimeSeriesLineChart = ({
     }
 
     try {
-      chartInstanceRef.current.setOption(
-        buildChartOption({
+      const zoomContext = JSON.stringify([rangeStartMs, rangeEndMs, series.map((item) => item.dataKey)]);
+      const currentZoom = zoomContextRef.current === zoomContext
+        ? chartInstanceRef.current.getOption().dataZoom?.[0]
+        : null;
+      const option = buildChartOption({
           chartData,
           series,
           rangeStartMs,
@@ -364,9 +370,13 @@ const TimeSeriesLineChart = ({
           emptyMessage,
           yAxisName,
           yAxes,
-        }),
-        { notMerge: true, lazyUpdate: true }
-      );
+        });
+      if (currentZoom) {
+        option.dataZoom[0].start = currentZoom.start;
+        option.dataZoom[0].end = currentZoom.end;
+      }
+      chartInstanceRef.current.setOption(option, { notMerge: true, lazyUpdate: true });
+      zoomContextRef.current = zoomContext;
     } catch (error) {
       if (!hasLoggedChartErrorRef.current) {
         console.error("Failed to render time series line chart:", error);
@@ -527,6 +537,7 @@ TimeSeriesLineChart.propTypes = {
       precision: PropTypes.number,
       smooth: PropTypes.number,
       unit: PropTypes.string,
+      yAxisIndex: PropTypes.number,
     })
   ).isRequired,
   subtitle: PropTypes.string,
@@ -535,6 +546,7 @@ TimeSeriesLineChart.propTypes = {
     PropTypes.shape({
       name: PropTypes.string,
       position: PropTypes.oneOf(["left", "right"]),
+      offset: PropTypes.number,
     })
   ),
   yAxisName: PropTypes.string,

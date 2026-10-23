@@ -44,7 +44,7 @@ const Header = ({ className = "", user = null, onLogout, onChangePassword }) => 
           className="h-9 w-9 rounded-lg bg-slate-950 object-cover shadow-[0_6px_16px_rgba(0,0,0,0.28)]"
         />
         <span className="text-2xl font-bold tracking-[0.02em] text-slate-50 md:text-[28px]">
-          DRUMS APPLICATION
+          DRUMS
         </span>
       </button>
 

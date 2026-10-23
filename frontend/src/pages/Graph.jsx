@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { buildTrendChartData, normalizeChannelName, trendSeriesKey } from "../services/trendData";
+import { groupSeriesByUnit } from "../services/chartAxes";
 
 import Footer from "../components/Footer";
 import Header from "../components/Header";
 import NavigationSidebar from "../components/NavigationSidebar";
-import TimeSeriesLineChart from "../components/TimeSeriesLineChart";
+import ExpandableTrendChart from "../components/ExpandableTrendChart";
 import VesselEngineSelector, {
   MultiSelectField,
 } from "../components/VesselEngineSelector";
@@ -95,7 +96,7 @@ const getDefaultEngineKeys = (engines = []) => {
   return engine?.key ? [engine.key] : [];
 };
 
-const Graph = ({ user, onLogout }) => {
+const GraphPanel = ({ onUpdated }) => {
   const initialRange = useMemo(buildInitialUtcRange, []);
   const [overviewConfig, setOverviewConfig] = useState([]);
   const [selectedVessel, setSelectedVessel] = useState("");
@@ -108,7 +109,6 @@ const Graph = ({ user, onLogout }) => {
   const [isChannelOptionsLoading, setIsChannelOptionsLoading] = useState(false);
   const [isTrendLoading, setIsTrendLoading] = useState(false);
   const [error, setError] = useState("");
-  const [lastUpdated, setLastUpdated] = useState(null);
   const [draftStartInput, setDraftStartInput] = useState(initialRange.draftStartInput);
   const [draftEndInput, setDraftEndInput] = useState(initialRange.draftEndInput);
   const [isChartDataOpen, setIsChartDataOpen] = useState(false);
@@ -316,7 +316,7 @@ const Graph = ({ user, onLogout }) => {
         }
 
         setTrendPayload(payload);
-        setLastUpdated(new Date());
+        onUpdated(new Date());
       })
       .catch((loadError) => {
         if (!isActive) {
@@ -373,6 +373,8 @@ const Graph = ({ user, onLogout }) => {
     () => buildTrendChartData(trendPayload?.records),
     [trendPayload]
   );
+
+  const chartAxes = useMemo(() => groupSeriesByUnit(chartSeries), [chartSeries]);
 
   const resetDraftRange = (vesselOption = selectedVesselOption) => {
     const nextRange = buildRangeFromVessel(vesselOption);
@@ -465,13 +467,6 @@ const Graph = ({ user, onLogout }) => {
       : selectedEngineSummary;
 
   return (
-    <div className="flex min-h-screen w-full flex-col overflow-hidden bg-[#07111f]">
-      <Header user={user} onLogout={onLogout} />
-
-      <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <NavigationSidebar className="w-full min-w-0 lg:w-56 lg:min-w-56" user={user} />
-
-        <section className="flex-1 min-w-0 p-3 lg:p-5">
           <div className="flex h-full min-h-[420px] flex-col gap-4 rounded-lg border border-slate-700 bg-slate-800/95 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.02)] lg:min-h-[calc(100vh-116px)] lg:p-5">
             <div className={cardClass}>
               <div className="flex flex-col gap-4">
@@ -611,23 +606,19 @@ const Graph = ({ user, onLogout }) => {
             ) : null}
 
             <div className="flex-1 rounded-[12px] border border-[#334155] bg-[#0f172a] p-4">
-              {isTrendLoading ? (
-                <div className="mb-4 inline-flex items-center gap-2 rounded-[10px] border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-[13px] font-semibold text-sky-200">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  Loading trend data from backend...
-                </div>
-              ) : null}
-              <TimeSeriesLineChart
+              <ExpandableTrendChart
+                loading={isTrendLoading}
                 chartData={chartData}
-                series={chartSeries}
+                series={chartAxes.series}
+                yAxes={chartAxes.yAxes}
                 rangeStartMs={trendPayload?.meta?.rangeStartMs ?? null}
                 rangeEndMs={trendPayload?.meta?.rangeEndMs ?? null}
-                chartHeight={400}
+                chartHeight={560}
                 title={`${selectedVesselOption?.label ?? "Vessel"} - ${appliedEngineTitle} Trend`}
                 yAxisName="Selected values"
                 emptyMessage={
                   isTrendLoading
-                    ? "Loading trend history..."
+                    ? ""
                     : submittedFilters
                       ? "No analog records returned for the selected vessel, engines, channels, and time range."
                       : "Select chart data and press Apply Filters to request trend data."
@@ -635,9 +626,37 @@ const Graph = ({ user, onLogout }) => {
               />
             </div>
           </div>
+  );
+};
+
+const Graph = ({ user, onLogout }) => {
+  const [chartCount, setChartCount] = useState(1);
+  const [lastUpdated, setLastUpdated] = useState(null);
+  return (
+    <div className="flex min-h-screen w-full flex-col overflow-hidden bg-[#07111f]">
+      <Header user={user} onLogout={onLogout} />
+      <main className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <NavigationSidebar className="w-full min-w-0 lg:w-56 lg:min-w-56" user={user} />
+        <section className="min-w-0 flex-1 space-y-4 p-3 lg:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-xl font-semibold text-slate-100">Graphs</h1>
+            <label className="flex items-center gap-3 text-sm text-slate-200">
+              Display
+              <select value={chartCount} onChange={(event) => setChartCount(Number(event.target.value))}
+                className="rounded-lg border border-slate-600 bg-slate-900 px-3 py-2">
+                <option value={1}>1 chart</option>
+                <option value={2}>2 charts</option>
+              </select>
+            </label>
+          </div>
+          {Array.from({ length: chartCount }, (_, index) => (
+            <section key={index} aria-label={`Chart ${index + 1}`}>
+              {chartCount === 2 ? <h2 className="mb-2 text-lg font-semibold text-slate-200">Chart {index + 1}</h2> : null}
+              <GraphPanel onUpdated={setLastUpdated} />
+            </section>
+          ))}
         </section>
       </main>
-
       <Footer lastUpdated={lastUpdated} pollIntervalMs={null} />
     </div>
   );
