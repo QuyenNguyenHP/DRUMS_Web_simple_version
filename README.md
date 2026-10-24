@@ -9,17 +9,18 @@
 
 ### Dịch vụ Tracking Vessel
 
-Trang tracking kết nối dịch vụ **VesselTrackingMap** qua Flask tại
-`GET /api/tracking/vessels`. Chạy project VesselTrackingMap trên cổng `8011`
-theo README của project đó và cấu hình MMSI thật trong `config.json` của nó.
-Flask mặc định đọc `http://127.0.0.1:8011/api/vessels`; có thể đổi địa chỉ
-bằng biến môi trường `VESSEL_TRACKING_URL` trước khi khởi động backend.
-Trong Docker, đặt biến này thành địa chỉ service có thể truy cập từ container.
+Trang tracking dùng trực tiếp OpenWaters qua Flask tại
+`GET /api/tracking/vessels`. Danh sách tàu và vị trí gần nhất được lưu trong
+`backend/vessel_tracking_config.json`; project không cần chạy VesselTrackingMap
+hay service ở cổng 8011. Thêm tàu bằng IMO, MMSI chín chữ số, tên và
+`enabled: true` trong file này.
 
-Giao diện tải lại danh sách mỗi 60 giây; collector của VesselTrackingMap
-cập nhật mỗi 5 phút. Vị trí hiển thị là quan sát AIS đã lưu, không phải cam kết
-vị trí thời gian thực. Khi dịch vụ không chạy, trang hiển thị lỗi và giữ dữ liệu
-đã tải. Bản đồ nền OpenStreetMap Standard cần internet. Leaflet 1.9.4 được lưu tại
+Giao diện tải lại danh sách mỗi 60 giây. Backend kiểm tra OpenWaters tối đa một
+lần mỗi 5 phút, tự chia MMSI thành nhóm phù hợp giới hạn API và giữ vị trí cũ nếu
+OpenWaters tạm thời lỗi. Có thể đổi đường dẫn cấu hình bằng
+`VESSEL_TRACKING_CONFIG` và API gốc bằng `OPENWATERS_API_BASE_URL`.
+Vị trí hiển thị là quan sát AIS đã lưu, không phải cam kết vị trí thời gian thực.
+Bản đồ nền OpenStreetMap Standard cần internet. Leaflet 1.9.4 được lưu tại
 `frontend/public/vendor/leaflet` kèm giấy phép để không tải thư viện từ CDN khi mở trang.
 
 Kiểm thử adapter: từ `backend`, chạy `python -m unittest test_tracking_api.py`.
