@@ -5,6 +5,26 @@
 ## Chức năng
 
 - Đăng nhập bằng tài khoản lưu tại backend, phân quyền `admin` và `user`.
+- Trang `/tracking-vessel`: bản đồ AIS, tìm tàu theo tên/MMSI/IMO, lọc tàu có tọa độ và xem thông tin vị trí gần nhất; màu sắc đồng bộ với DRUMS.
+
+### Dịch vụ Tracking Vessel
+
+Trang tracking kết nối dịch vụ **VesselTrackingMap** qua Flask tại
+`GET /api/tracking/vessels`. Chạy project VesselTrackingMap trên cổng `8011`
+theo README của project đó và cấu hình MMSI thật trong `config.json` của nó.
+Flask mặc định đọc `http://127.0.0.1:8011/api/vessels`; có thể đổi địa chỉ
+bằng biến môi trường `VESSEL_TRACKING_URL` trước khi khởi động backend.
+Trong Docker, đặt biến này thành địa chỉ service có thể truy cập từ container.
+
+Giao diện tải lại danh sách mỗi 60 giây; collector của VesselTrackingMap
+cập nhật mỗi 5 phút. Vị trí hiển thị là quan sát AIS đã lưu, không phải cam kết
+vị trí thời gian thực. Khi dịch vụ không chạy, trang hiển thị lỗi và giữ dữ liệu
+đã tải. Bản đồ nền OpenStreetMap Standard cần internet. Leaflet 1.9.4 được lưu tại
+`frontend/public/vendor/leaflet` kèm giấy phép để không tải thư viện từ CDN khi mở trang.
+
+Kiểm thử adapter: từ `backend`, chạy `python -m unittest test_tracking_api.py`.
+
+### Các trang giám sát khác
 - Trang tổng quan `/`: chọn tàu, động cơ và hiển thị dữ liệu giám sát.
 - Trang biểu đồ `/graph`: xem dữ liệu xu hướng. Các đường dẫn `/pressure_trend`, `/exh_temp_trend`, `/fo-consumption` và `/alarms` hiện cùng sử dụng thành phần `Graph`.
 - Trang quản trị `/admin`: xem, tạo và xóa tài khoản.

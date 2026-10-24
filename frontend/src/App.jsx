@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 
 import Overview from "./pages/Overview";
+import TrackingVessel from "./pages/TrackingVessel";
 import EnginePage from "./pages/EnginePage";
 import Graph from "./pages/Graph";
 import AdminPage from "./pages/AdminPage";
@@ -21,6 +22,10 @@ import {
 } from "./services/authApi";
 
 const PAGE_META = {
+  "/tracking-vessel": {
+    title: "Tracking Vessel | DRUMS",
+    description: "Fleet map and latest saved AIS positions.",
+  },
   "/about": {
     title: "DRUMS | Customizable Industrial Monitoring by Daikai",
     description: "Discover DRUMS by Daikai: customizable data collection, storage, visualization, and monitoring, from CPU board design to complete system integration.",
@@ -101,6 +106,7 @@ function App() {
 
   return (
     <Routes>
+      <Route path="/tracking-vessel" element={<TrackingVessel user={session.user} onLogout={handleLogout} />} />
       <Route path="/about" element={<About user={session.user} onLogout={handleLogout} />} />
       <Route
         path="/admin/config"

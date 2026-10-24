@@ -9,6 +9,7 @@ from auth_api import auth_api
 from config_api import config_api
 from database_api_engine import engine_api
 from database_api_overview import overview_api
+from tracking_api import tracking_api
 
 
 app = Flask(__name__)
@@ -19,6 +20,7 @@ app.register_blueprint(auth_api)
 app.register_blueprint(config_api)
 app.register_blueprint(overview_api)
 app.register_blueprint(engine_api)
+app.register_blueprint(tracking_api)
 
 
 if __name__ == "__main__":
